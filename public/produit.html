@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produit - Le petit bout de bois</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="site-title">
+      <span class="nail"></span>
+      <span class="nail"></span>
+      <h1>Le petit bout de bois</h1>
+    </div>
+    <p class="site-subtitle">Créations artisanales en bois</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <ul>
+      <li><a href="/">Accueil</a></li>
+      <li><a href="/catalogue">Catalogue</a></li>
+      <li><a href="/panier">Panier <span id="cart-count">(0)</span></a></li>
+      <li><a href="/contact">Contact</a></li>
+      <li><a href="/boutique" style="background: linear-gradient(135deg, #8B4513, #A0522D); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; transition: transform 0.3s ease, box-shadow 0.3s ease; border: 2px solid #D2691E;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px rgba(139, 69, 19, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">🏡 La Boutique</a></li>
+    </ul>
+  </nav>
+
+  <!-- Conteneur principal -->
+  <div class="container page-transition">
+    <!-- Fil d'Ariane -->
+    <div style="margin-bottom: 2rem;">
+      <a href="/" style="color: var(--wood-medium); text-decoration: none;">🏠 Accueil</a>
+      <span style="color: var(--wood-medium); margin: 0 0.5rem;">›</span>
+      <a href="/catalogue" style="color: var(--wood-medium); text-decoration: none;">Catalogue</a>
+      <span style="color: var(--wood-medium); margin: 0 0.5rem;">›</span>
+      <span id="breadcrumb-product" style="color: var(--wood-dark); font-weight: 600;">Produit</span>
+    </div>
+
+    <!-- Détails du produit -->
+    <div id="product-details" style="background: white; border-radius: 12px; padding: 2rem;
+                                     box-shadow: var(--shadow-medium); border: 3px solid var(--wood-light);">
+      <!-- Le contenu sera chargé ici -->
+      <p style="text-align: center; padding: 3rem; color: var(--wood-medium);">
+        Chargement du produit...
+      </p>
+    </div>
+
+    <!-- Produits similaires -->
+    <div id="similar-products-section" style="margin-top: 3rem; display: none;">
+      <h2 style="text-align: center; color: var(--wood-dark); margin-bottom: 2rem; font-size: 2rem;">
+        🪵 Créations similaires
+      </h2>
+      <div class="product-grid" id="similar-products">
+        <!-- Les produits similaires seront chargés ici -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p><strong>Le petit bout de bois</strong> - Créations artisanales par Jean-Michel Nougué-Lecocq</p>
+    <p>
+      <a href="/contact">Contact</a> |
+      <a href="/admin">Administration</a> |
+      <a href="http://localhost:3000">La p'tite perlouze</a>
+    </p>
+    <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
+      © 2025 Le petit bout de bois - Fait avec passion 🪵
+    </p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/modal.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    let currentProduct = null;
+
+    // Récupérer l'ID du produit depuis l'URL
+    const productId = window.location.pathname.split('/').pop();
+
+    // Charger le produit
+    async function loadProduct() {
+      try {
+        const response = await fetch(`/api/products/${productId}`);
+
+        if (!response.ok) {
+          throw new Error('Produit non trouvé');
+        }
+
+        currentProduct = await response.json();
+        displayProduct();
+        loadSimilarProducts();
+      } catch (error) {
+        console.error('Erreur chargement produit:', error);
+        document.getElementById('product-details').innerHTML = `
+          <div style="text-align: center; padding: 3rem;">
+            <p style="font-size: 1.5rem; color: var(--wood-medium); margin-bottom: 1rem;">
+              😕 Produit non trouvé
+            </p>
+            <a href="/catalogue" class="btn btn-primary">Retour au catalogue</a>
+          </div>
+        `;
+      }
+    }
+
+    // Afficher le produit
+    function displayProduct() {
+      const container = document.getElementById('product-details');
+      const breadcrumb = document.getElementById('breadcrumb-product');
+
+      breadcrumb.textContent = currentProduct.name;
+
+      // Initialiser les images pour la galerie
+      productImages = currentProduct.images && currentProduct.images.length > 0
+        ? currentProduct.images
+        : [{ image_path: currentProduct.image_url || '/images/placeholder.jpg' }];
+      currentImageIndex = 0;
+
+      // Préparer la galerie d'images
+      const images = currentProduct.images && currentProduct.images.length > 0
+        ? currentProduct.images
+        : [{ image_path: currentProduct.image_url || '/images/placeholder.jpg' }];
+
+      container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 3rem;">
+          <!-- Galerie d'images -->
+          <div>
+            <!-- Image principale -->
+            <div style="position: relative; margin-bottom: 1rem;">
+              <img id="main-product-image"
+                   src="${images[0].image_path}"
+                   alt="${currentProduct.name}"
+                   style="width: 100%; border-radius: 12px; box-shadow: var(--shadow-medium);
+                          border: 4px solid var(--wood-light);">
+
+              ${images.length > 1 ? `
+                <button onclick="previousImage()"
+                        style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+                               background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
+                               width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer;
+                               box-shadow: var(--shadow-medium); transition: all 0.2s ease;"
+                        onmouseover="this.style.background='white'; this.style.transform='translateY(-50%) scale(1.1)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.9)'; this.style.transform='translateY(-50%)'">
+                  ←
+                </button>
+                <button onclick="nextImage()"
+                        style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+                               background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
+                               width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer;
+                               box-shadow: var(--shadow-medium); transition: all 0.2s ease;"
+                        onmouseover="this.style.background='white'; this.style.transform='translateY(-50%) scale(1.1)'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.9)'; this.style.transform='translateY(-50%)'">
+                  →
+                </button>
+
+                <div style="position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%);
+                            background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem;
+                            border-radius: 20px; font-size: 0.9rem;">
+                  <span id="current-image-index">1</span> / ${images.length}
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Miniatures -->
+            ${images.length > 1 ? `
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.5rem;">
+                ${images.map((img, index) => `
+                  <img src="${img.image_path}"
+                       onclick="selectImage(${index})"
+                       style="width: 100%; height: 80px; object-fit: cover; border-radius: 8px;
+                              cursor: pointer; border: 3px solid ${index === 0 ? 'var(--accent-orange)' : 'var(--wood-light)'};
+                              transition: all 0.2s ease;"
+                       class="thumbnail-image"
+                       data-index="${index}"
+                       onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='var(--shadow-medium)'"
+                       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${currentProduct.perlouze_link ? `
+              <a href="${currentProduct.perlouze_link}" class="perlouze-link"
+                 style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+                        margin-top: 1rem; font-size: 1rem; padding: 1rem;">
+                ✨ Voir les bijoux assortis sur La p'tite perlouze →
+              </a>
+            ` : ''}
+          </div>
+
+          <!-- Informations du produit -->
+          <div>
+            <span class="product-category" style="font-size: 1rem; padding: 0.5rem 1rem;">
+              ${currentProduct.category}
+            </span>
+
+            <h1 style="color: var(--wood-dark); font-size: 2.5rem; margin: 1rem 0;">
+              ${currentProduct.name}
+            </h1>
+
+            <div style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0;
+                        padding: 1rem; background: var(--cream); border-radius: 8px;">
+              <span style="font-size: 2rem;">🪵</span>
+              <div>
+                <p style="font-size: 0.9rem; color: var(--wood-medium); margin: 0;">Essence de bois</p>
+                <p style="font-size: 1.2rem; color: var(--wood-dark); margin: 0; font-weight: 600;">
+                  ${currentProduct.wood_type}
+                </p>
+              </div>
+            </div>
+
+            <p style="font-size: 1.1rem; color: var(--slate-gray); line-height: 1.8; margin: 1.5rem 0;">
+              ${currentProduct.description}
+            </p>
+
+            <div style="background: linear-gradient(135deg, var(--wood-light), var(--wood-medium));
+                        padding: 1.5rem; border-radius: 12px; margin: 2rem 0;">
+              <p style="color: white; font-size: 1rem; margin: 0;">Prix</p>
+              <p style="color: white; font-size: 3rem; font-weight: 700; margin: 0;">
+                ${currentProduct.price.toFixed(2)} €
+              </p>
+            </div>
+
+            <!-- Stock -->
+            <div style="margin: 1rem 0;">
+              ${currentProduct.stock > 0 ? `
+                <p style="color: var(--accent-green); font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                  ✓ En stock (${currentProduct.stock} disponible${currentProduct.stock > 1 ? 's' : ''})
+                </p>
+              ` : `
+                <p style="color: #DC2626; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                  ✗ Rupture de stock
+                </p>
+              `}
+            </div>
+
+            <!-- Quantité et ajout au panier -->
+            ${currentProduct.stock > 0 ? `
+              <div style="display: flex; gap: 1rem; margin-top: 2rem; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; background: var(--cream);
+                            padding: 0.5rem; border-radius: 8px; border: 2px solid var(--wood-light);">
+                  <button onclick="decreaseQuantity()"
+                          style="width: 40px; height: 40px; border: none; background: var(--wood-medium);
+                                 color: white; border-radius: 6px; font-size: 1.5rem; cursor: pointer;
+                                 transition: all 0.2s ease;"
+                          onmouseover="this.style.background='var(--wood-dark)'"
+                          onmouseout="this.style.background='var(--wood-medium)'">
+                    −
+                  </button>
+                  <input type="number" id="quantity" value="1" min="1" max="${currentProduct.stock}"
+                         style="width: 70px; text-align: center; border: 2px solid var(--wood-light);
+                                border-radius: 6px; padding: 0.5rem; font-size: 1.5rem; font-weight: 700;
+                                font-family: 'Raleway', sans-serif;">
+                  <button onclick="increaseQuantity()"
+                          style="width: 40px; height: 40px; border: none; background: var(--wood-medium);
+                                 color: white; border-radius: 6px; font-size: 1.5rem; cursor: pointer;
+                                 transition: all 0.2s ease;"
+                          onmouseover="this.style.background='var(--wood-dark)'"
+                          onmouseout="this.style.background='var(--wood-medium)'">
+                    +
+                  </button>
+                </div>
+
+                <button onclick="addProductToCart()" class="btn btn-primary btn-add-cart"
+                        style="flex: 1; padding: 1rem 2rem; font-size: 1.3rem; font-weight: 700;">
+                  <span class="cart-icon">🛒</span><span class="cart-text"> Ajouter au panier</span>
+                </button>
+              </div>
+            ` : `
+              <button class="btn" disabled
+                      style="width: 100%; margin-top: 2rem; padding: 1rem; background: #E5E7EB;
+                             color: #6B7280; cursor: not-allowed;">
+                Produit indisponible
+              </button>
+            `}
+
+            <!-- Informations complémentaires -->
+            <div style="margin-top: 2rem; padding: 1.5rem; background: var(--cream); border-radius: 8px;
+                        border-left: 4px solid var(--accent-green);">
+              <h3 style="color: var(--wood-dark); margin-bottom: 1rem;">ℹ️ Informations</h3>
+              <ul style="color: var(--slate-gray); line-height: 1.8;">
+                <li>Création artisanale 100% fait main</li>
+                <li>Bois naturel : ${currentProduct.wood_type}</li>
+                <li>Finition soignée avec produits naturels</li>
+                <li>Pièce unique ou série limitée</li>
+                <li>Possibilité de personnalisation (nous contacter)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Gestion de la quantité
+    function increaseQuantity() {
+      const input = document.getElementById('quantity');
+      const max = parseInt(input.max);
+      let value = parseInt(input.value);
+
+      if (value < max) {
+        input.value = value + 1;
+      }
+    }
+
+    function decreaseQuantity() {
+      const input = document.getElementById('quantity');
+      let value = parseInt(input.value);
+
+      if (value > 1) {
+        input.value = value - 1;
+      }
+    }
+
+    // Ajouter au panier avec quantité
+    function addProductToCart() {
+      const quantity = parseInt(document.getElementById('quantity').value);
+      cart.addItem(currentProduct, quantity);
+    }
+
+    // Charger des produits similaires
+    async function loadSimilarProducts() {
+      try {
+        const response = await fetch(`/api/products?category=${encodeURIComponent(currentProduct.category)}`);
+        const products = await response.json();
+
+        // Filtrer pour exclure le produit actuel
+        const similarProducts = products
+          .filter(p => p.id !== currentProduct.id)
+          .slice(0, 3);
+
+        if (similarProducts.length > 0) {
+          displaySimilarProducts(similarProducts);
+        }
+      } catch (error) {
+        console.error('Erreur chargement produits similaires:', error);
+      }
+    }
+
+    // Afficher les produits similaires
+    function displaySimilarProducts(products) {
+      const section = document.getElementById('similar-products-section');
+      const container = document.getElementById('similar-products');
+
+      section.style.display = 'block';
+
+      container.innerHTML = products.map(product => `
+        <div class="product-card" onclick="window.location.href='/produit/${product.id}'">
+          <img src="${product.image_url || '/images/placeholder.jpg'}"
+               alt="${product.name}"
+               class="product-image">
+          <div class="product-info">
+            <span class="product-category">${product.category}</span>
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-wood">🪵 ${product.wood_type}</p>
+            <p class="product-price">${product.price.toFixed(2)} €</p>
+            <button class="btn btn-primary" style="width: 100%;">Voir</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Gestion de la galerie d'images
+    let currentImageIndex = 0;
+    let productImages = [];
+
+    function selectImage(index) {
+      currentImageIndex = index;
+      updateMainImage();
+    }
+
+    function previousImage() {
+      currentImageIndex = (currentImageIndex - 1 + productImages.length) % productImages.length;
+      updateMainImage();
+    }
+
+    function nextImage() {
+      currentImageIndex = (currentImageIndex + 1) % productImages.length;
+      updateMainImage();
+    }
+
+    function updateMainImage() {
+      const mainImg = document.getElementById('main-product-image');
+      const indexDisplay = document.getElementById('current-image-index');
+
+      if (mainImg && productImages[currentImageIndex]) {
+        mainImg.src = productImages[currentImageIndex].image_path;
+
+        if (indexDisplay) {
+          indexDisplay.textContent = currentImageIndex + 1;
+        }
+
+        // Mettre à jour les bordures des miniatures
+        document.querySelectorAll('.thumbnail-image').forEach((thumb, idx) => {
+          thumb.style.border = idx === currentImageIndex
+            ? '3px solid var(--accent-orange)'
+            : '3px solid var(--wood-light)';
+        });
+      }
+    }
+
+    // Charger au démarrage
+    loadProduct();
+
+    // Animation de copeaux
+    function createWoodChips() {
+      const numChips = 8;
+      for (let i = 0; i < numChips; i++) {
+        const chip = document.createElement('div');
+        chip.className = 'wood-chip';
+        chip.style.left = Math.random() * 100 + '%';
+        chip.style.animationDelay = Math.random() * 8 + 's';
+        chip.style.animationDuration = (8 + Math.random() * 4) + 's';
+        document.body.appendChild(chip);
+      }
+    }
+    createWoodChips();
+  </script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact - Le petit bout de bois</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="site-title">
+      <span class="nail"></span>
+      <span class="nail"></span>
+      <h1>Le petit bout de bois</h1>
+    </div>
+    <p class="site-subtitle">Créations artisanales en bois</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <ul>
+      <li><a href="/">Accueil</a></li>
+      <li><a href="/catalogue">Catalogue</a></li>
+      <li><a href="/panier">Panier <span id="cart-count">(0)</span></a></li>
+      <li><a href="/contact">Contact</a></li>
+      <li><a href="/boutique" style="background: linear-gradient(135deg, #8B4513, #A0522D); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; transition: transform 0.3s ease, box-shadow 0.3s ease; border: 2px solid #D2691E;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px rgba(139, 69, 19, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">🏡 La Boutique</a></li>
+    </ul>
+  </nav>
+
+  <!-- Conteneur principal -->
+  <div class="container page-transition">
+    <h1 style="text-align: center; color: var(--wood-dark); margin-bottom: 2rem; font-size: 2.5rem;">
+      📧 Contactez-nous
+    </h1>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 1000px; margin: 0 auto;">
+      <!-- Formulaire de contact -->
+      <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-medium);
+                  border: 3px solid var(--wood-light);">
+        <h2 style="color: var(--wood-dark); margin-bottom: 1.5rem;">Envoyez un message</h2>
+
+        <form id="contact-form" onsubmit="sendMessage(event)">
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-medium); font-weight: 600;">
+              Nom *
+            </label>
+            <input type="text" name="name" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                          border-radius: 8px; font-size: 1rem; background: var(--cream);">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-medium); font-weight: 600;">
+              Email *
+            </label>
+            <input type="email" name="email" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                          border-radius: 8px; font-size: 1rem; background: var(--cream);">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-medium); font-weight: 600;">
+              Téléphone
+            </label>
+            <input type="tel" name="phone"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                          border-radius: 8px; font-size: 1rem; background: var(--cream);">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-medium); font-weight: 600;">
+              Sujet
+            </label>
+            <select name="subject"
+                    style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                           border-radius: 8px; font-size: 1rem; background: var(--cream);">
+              <option>Demande d'information</option>
+              <option>Commande personnalisée</option>
+              <option>Question sur un produit</option>
+              <option>Autre</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-medium); font-weight: 600;">
+              Message *
+            </label>
+            <textarea name="message" rows="6" required
+                      style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                             border-radius: 8px; font-size: 1rem; background: var(--cream);
+                             font-family: inherit;"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+            📨 Envoyer le message
+          </button>
+        </form>
+      </div>
+
+      <!-- Informations de contact -->
+      <div>
+        <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-medium);
+                    border: 3px solid var(--wood-light); margin-bottom: 1.5rem;">
+          <h2 style="color: var(--wood-dark); margin-bottom: 1.5rem;">Informations</h2>
+
+          <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: var(--wood-medium); font-size: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              👤 Artisan
+            </h3>
+            <p style="color: var(--slate-gray); margin: 0;">Jean-Michel Nougué-Lecocq</p>
+          </div>
+
+          <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: var(--wood-medium); font-size: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              📧 Email
+            </h3>
+            <p style="color: var(--slate-gray); margin: 0;">contact@lepetitboutdebois.fr</p>
+          </div>
+
+          <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: var(--wood-medium); font-size: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              ⏰ Horaires
+            </h3>
+            <p style="color: var(--slate-gray); margin: 0;">
+              Lundi - Vendredi : 9h - 18h<br>
+              Samedi : 10h - 16h
+            </p>
+          </div>
+
+          <div>
+            <h3 style="color: var(--wood-medium); font-size: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              ⚒️ L'atelier
+            </h3>
+            <p style="color: var(--slate-gray); margin: 0;">
+              Toutes nos créations sont réalisées à la main dans notre atelier.
+              Possibilité de créations sur mesure et personnalisées.
+            </p>
+          </div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(167, 139, 250, 0.1));
+                    border-radius: 12px; padding: 2rem; text-align: center;
+                    box-shadow: var(--shadow-medium); border: 3px solid rgba(147, 51, 234, 0.3);">
+          <h3 style="color: var(--wood-dark); margin-bottom: 1rem;">✨ La p'tite perlouze</h3>
+          <p style="color: var(--wood-medium); margin-bottom: 1rem; font-size: 0.95rem;">
+            Découvrez aussi les bijoux en pierres naturelles de notre partenaire Yvonne Lecocq
+          </p>
+          <a href="http://localhost:3000/contact" class="btn"
+             style="background: linear-gradient(135deg, #9333EA, #7C3AED); color: white;
+                    display: inline-flex; align-items: center; gap: 0.5rem;">
+            Contacter La p'tite perlouze →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p><strong>Le petit bout de bois</strong> - Créations artisanales par Jean-Michel Nougué-Lecocq</p>
+    <p>
+      <a href="/contact">Contact</a> |
+      <a href="/admin">Administration</a> |
+      <a href="http://localhost:3000">La p'tite perlouze</a>
+    </p>
+    <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
+      © 2025 Le petit bout de bois - Fait avec passion 🪵
+    </p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/modal.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    async function sendMessage(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        subject: formData.get('subject'),
+        message: formData.get('message')
+      };
+
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          throw new Error('Erreur lors de l\'envoi');
+        }
+
+        // Succès
+        form.reset();
+        showSuccess('Message envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.');
+
+      } catch (error) {
+        console.error('Erreur:', error);
+        showError('Erreur lors de l\'envoi du message. Veuillez réessayer.');
+      }
+    }
+
+    // Animation de copeaux
+    function createWoodChips() {
+      const numChips = 8;
+      for (let i = 0; i < numChips; i++) {
+        const chip = document.createElement('div');
+        chip.className = 'wood-chip';
+        chip.style.left = Math.random() * 100 + '%';
+        chip.style.animationDelay = Math.random() * 8 + 's';
+        chip.style.animationDuration = (8 + Math.random() * 4) + 's';
+        document.body.appendChild(chip);
+      }
+    }
+    createWoodChips();
+  </script>
+</body>
+</html>

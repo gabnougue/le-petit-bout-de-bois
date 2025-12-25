@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panier - Le petit bout de bois</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    .hidden {
+      display: none !important;
+    }
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="site-title">
+      <span class="nail"></span>
+      <span class="nail"></span>
+      <h1>Le petit bout de bois</h1>
+    </div>
+    <p class="site-subtitle">Créations artisanales en bois</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <ul>
+      <li><a href="/">Accueil</a></li>
+      <li><a href="/catalogue">Catalogue</a></li>
+      <li><a href="/panier">Panier <span id="cart-count">(0)</span></a></li>
+      <li><a href="/contact">Contact</a></li>
+      <li><a href="/boutique" style="background: linear-gradient(135deg, #8B4513, #A0522D); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; transition: transform 0.3s ease, box-shadow 0.3s ease; border: 2px solid #D2691E;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px rgba(139, 69, 19, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">🏡 La Boutique</a></li>
+    </ul>
+  </nav>
+
+  <!-- Conteneur principal -->
+  <div class="container page-transition">
+    <h1 style="text-align: center; color: var(--wood-dark); margin-bottom: 2rem; font-size: 2.5rem;">
+      🛒 Votre panier
+    </h1>
+
+    <!-- Section Panier -->
+    <div id="cart-section" style="display: grid; grid-template-columns: 1fr; lg:grid-template-columns: 2fr 1fr; gap: 2rem;">
+      <!-- Liste des articles -->
+      <div>
+        <div id="cart-items" style="background: white; border-radius: 12px; padding: 2rem;
+                                     box-shadow: var(--shadow-medium); border: 3px solid var(--wood-light);">
+          <!-- Les articles seront chargés ici -->
+        </div>
+      </div>
+
+      <!-- Récapitulatif -->
+      <div>
+        <div id="cart-summary" style="background: white; border-radius: 12px; padding: 2rem;
+                                       box-shadow: var(--shadow-medium); border: 3px solid var(--wood-light);
+                                       position: sticky; top: 20px;">
+          <!-- Le récapitulatif sera chargé ici -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Commande (cachée au départ) -->
+    <div id="checkout-section" style="display: none; margin-top: 2rem;">
+      <h2 style="text-align: center; color: var(--wood-dark); margin-bottom: 2rem; font-size: 2rem;">
+        📦 Informations de livraison
+      </h2>
+
+      <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-medium);
+                  border: 3px solid var(--wood-light); max-width: 800px; margin: 0 auto;">
+        <form id="checkout-form">
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">Nom complet *</label>
+            <input type="text" id="customer-name" name="customerName" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                          border-radius: 8px; background: var(--cream); font-family: inherit;">
+          </div>
+
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">Email *</label>
+            <input type="email" id="customer-email" name="customerEmail" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                          border-radius: 8px; background: var(--cream); font-family: inherit;">
+          </div>
+
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">Téléphone</label>
+            <input type="tel" id="customer-phone" name="customerPhone"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                          border-radius: 8px; background: var(--cream); font-family: inherit;">
+          </div>
+
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">Adresse de livraison *</label>
+            <textarea id="customer-address" name="customerAddress" rows="4" required
+                      style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light);
+                             border-radius: 8px; background: var(--cream); font-family: inherit;"></textarea>
+          </div>
+
+          <div style="background: var(--cream); padding: 1.5rem; border-radius: 8px; margin: 2rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--wood-dark);">📋 Récapitulatif de la commande</h4>
+            <div id="checkout-summary">
+              <!-- Le récapitulatif sera chargé ici -->
+            </div>
+          </div>
+
+          <!-- Élément de paiement Stripe -->
+          <div style="margin: 2rem 0;">
+            <h4 style="margin-bottom: 1rem; color: var(--wood-dark);">💳 Informations de paiement</h4>
+            <div id="payment-element" style="margin-bottom: 1.5rem;">
+              <!-- L'interface de paiement Stripe sera chargée ici -->
+            </div>
+            <div id="payment-message" class="hidden" style="color: #df1b41; margin-top: 1rem; padding: 1rem; background: #fef2f2; border-radius: 8px;"></div>
+          </div>
+
+          <button type="submit" id="submit-button" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+            <span id="button-text">💳 Payer et valider la commande</span>
+            <div id="spinner" class="spinner hidden"></div>
+          </button>
+
+          <button type="button" class="btn btn-secondary" onclick="cancelCheckout()" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">
+            ← Retour au panier
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p><strong>Le petit bout de bois</strong> - Créations artisanales par Jean-Michel Nougué-Lecocq</p>
+    <p>
+      <a href="/contact">Contact</a> |
+      <a href="/admin">Administration</a> |
+      <a href="http://localhost:3000">La p'tite perlouze</a>
+    </p>
+    <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
+      © 2025 Le petit bout de bois - Fait avec passion 🪵
+    </p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/modal.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/panier-stripe.js"></script>
+
+  <!-- Animation de copeaux -->
+  <script>
+    function createWoodChips() {
+      const numChips = 8;
+      for (let i = 0; i < numChips; i++) {
+        const chip = document.createElement('div');
+        chip.className = 'wood-chip';
+        chip.style.left = Math.random() * 100 + '%';
+        chip.style.animationDelay = Math.random() * 8 + 's';
+        chip.style.animationDuration = (8 + Math.random() * 4) + 's';
+        document.body.appendChild(chip);
+      }
+    }
+    createWoodChips();
+  </script>
+</body>
+</html>

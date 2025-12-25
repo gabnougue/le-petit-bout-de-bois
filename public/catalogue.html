@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalogue - Le petit bout de bois</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="site-title">
+      <span class="nail"></span>
+      <span class="nail"></span>
+      <h1>Le petit bout de bois</h1>
+    </div>
+    <p class="site-subtitle">Créations artisanales en bois</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <ul>
+      <li><a href="/">Accueil</a></li>
+      <li><a href="/catalogue">Catalogue</a></li>
+      <li><a href="/panier">Panier <span id="cart-count">(0)</span></a></li>
+      <li><a href="/contact">Contact</a></li>
+      <li><a href="/boutique" style="background: linear-gradient(135deg, #8B4513, #A0522D); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; transition: transform 0.3s ease, box-shadow 0.3s ease; border: 2px solid #D2691E;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px rgba(139, 69, 19, 0.5)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">🏡 La Boutique</a></li>
+    </ul>
+  </nav>
+
+  <!-- Conteneur principal -->
+  <div class="container page-transition">
+    <h1 style="text-align: center; color: var(--wood-dark); margin-bottom: 2rem; font-size: 2.5rem;">
+      🪵 Catalogue de créations
+    </h1>
+
+    <!-- Filtres et recherche -->
+    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-medium);
+                margin-bottom: 2rem; border: 3px solid var(--wood-light);">
+      <h3 style="color: var(--wood-dark); margin-bottom: 1.5rem; text-align: center; font-size: 1.5rem;">
+        🔍 Filtrer les créations
+      </h3>
+
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+        <!-- Filtres par catégorie (chargés dynamiquement) -->
+        <div id="category-filters" style="display: flex; gap: 0.5rem; flex-wrap: wrap; flex: 1;">
+          <!-- Les boutons de catégories seront générés par JavaScript -->
+        </div>
+
+        <!-- Barre de recherche -->
+        <div style="flex: 0 0 auto; min-width: 250px;">
+          <input type="text" id="search-input" placeholder="Rechercher..."
+                 style="width: 100%; padding: 0.5rem 1rem; border: 2px solid var(--wood-light);
+                        border-radius: 8px; font-size: 1rem; background: var(--cream);">
+        </div>
+      </div>
+
+      <!-- Filtre par prix -->
+      <div class="form-group" style="margin-top: 1.5rem;">
+        <label for="price-filter" style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">
+          Prix maximum : <span id="price-value" style="color: var(--accent-orange); font-weight: 700;">100</span> €
+        </label>
+        <input type="range" id="price-filter" min="0" max="100" value="100">
+      </div>
+
+      <div style="text-align: center; margin-top: 1rem;">
+        <button onclick="resetFilters()" class="btn btn-secondary">
+          🔄 Réinitialiser les filtres
+        </button>
+      </div>
+    </div>
+
+    <!-- Compteur de produits -->
+    <p id="product-count" style="text-align: center; color: var(--wood-medium); margin-bottom: 1rem; font-size: 1.1rem;">
+      Chargement des produits...
+    </p>
+
+    <!-- Grille de produits -->
+    <div class="product-grid" id="products-container">
+      <!-- Les produits seront chargés ici -->
+    </div>
+
+    <!-- Message si aucun produit -->
+    <div id="no-products" style="display: none; text-align: center; padding: 3rem; color: var(--wood-medium);">
+      <p style="font-size: 1.5rem;">🔍 Aucun produit trouvé</p>
+      <p>Essayez de modifier vos filtres ou votre recherche</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p><strong>Le petit bout de bois</strong> - Créations artisanales par Jean-Michel Nougué-Lecocq</p>
+    <p>
+      <a href="/contact">Contact</a> |
+      <a href="/admin">Administration</a> |
+      <a href="http://localhost:3000">La p'tite perlouze</a>
+    </p>
+    <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
+      © 2025 Le petit bout de bois - Fait avec passion 🪵
+    </p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/modal.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/catalogue.js"></script>
+
+  <!-- Animation de copeaux -->
+  <script>
+    function createWoodChips() {
+      const numChips = 8;
+      for (let i = 0; i < numChips; i++) {
+        const chip = document.createElement('div');
+        chip.className = 'wood-chip';
+        chip.style.left = Math.random() * 100 + '%';
+        chip.style.animationDelay = Math.random() * 8 + 's';
+        chip.style.animationDuration = (8 + Math.random() * 4) + 's';
+        document.body.appendChild(chip);
+      }
+    }
+    createWoodChips();
+  </script>
+</body>
+</html>

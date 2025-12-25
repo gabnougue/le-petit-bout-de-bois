@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion Admin - Le petit bout de bois</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="admin-login-container">
+    <div class="login-card">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🪵</div>
+        <h2>Administration</h2>
+        <p style="color: var(--wood-medium); margin-top: 0.5rem;">Le petit bout de bois</p>
+      </div>
+
+      <div id="error-message"></div>
+
+      <form id="login-form" onsubmit="login(event)">
+        <div class="form-group">
+          <label for="username">Nom d'utilisateur</label>
+          <input type="text" id="username" name="username" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="login-btn">
+          Se connecter
+        </button>
+      </form>
+
+      <div style="margin-top: 2rem; text-align: center; padding-top: 1.5rem; border-top: 2px solid var(--cream);">
+        <p style="color: var(--wood-medium); font-size: 0.9rem;">
+          <a href="/" style="color: var(--accent-orange); text-decoration: none;">← Retour au site</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Vérifier si déjà connecté
+    fetch('/api/admin/check-session')
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated) {
+          window.location.href = '/admin/dashboard';
+        }
+      });
+
+    // Connexion
+    async function login(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      const credentials = {
+        username: formData.get('username'),
+        password: formData.get('password')
+      };
+
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(credentials)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showError(data.error || 'Erreur de connexion');
+          return;
+        }
+
+        // Succès - rediriger vers le dashboard
+        window.location.href = '/admin/dashboard';
+
+      } catch (error) {
+        console.error('Erreur:', error);
+        showError('Erreur de connexion. Veuillez réessayer.');
+      }
+    }
+
+    // Afficher une erreur
+    function showError(message) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.innerHTML = `
+        <div class="alert alert-error">${message}</div>
+      `;
+
+      setTimeout(() => {
+        errorDiv.innerHTML = '';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Admin - Le petit bout de bois</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body style="background: var(--cream);">
+  <div class="admin-dashboard">
+    <!-- Header -->
+    <div class="admin-header">
+      <div>
+        <h1>🪵 Administration</h1>
+        <p style="margin: 0; opacity: 0.9;">Le petit bout de bois</p>
+      </div>
+      <div class="admin-user-info">
+        <span id="admin-username"></span>
+        <button onclick="logout()" class="logout-btn">Déconnexion</button>
+      </div>
+    </div>
+
+    <!-- Onglets -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="stats">Statistiques</button>
+      <button class="admin-tab" data-tab="products">Produits</button>
+      <button class="admin-tab" data-tab="orders">
+        Commandes
+        <span id="orders-badge" class="notification-badge" style="display: none;">0</span>
+      </button>
+      <button class="admin-tab" data-tab="messages">
+        Messages
+        <span id="messages-badge" class="notification-badge" style="display: none;">0</span>
+      </button>
+      <button class="admin-tab" data-tab="boutique">Boutique</button>
+      <button class="admin-tab" data-tab="settings">Paramètres</button>
+    </div>
+
+    <!-- Contenu: Statistiques -->
+    <div id="tab-stats" class="tab-content active fade-in">
+      <div class="admin-section">
+        <div class="section-header">
+          <h2>📊 Statistiques</h2>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Produits</h3>
+            <div class="stat-value" id="stat-products">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Commandes</h3>
+            <div class="stat-value" id="stat-orders">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Chiffre d'affaires</h3>
+            <div class="stat-value" id="stat-revenue">-</div>
+          </div>
+          <div class="stat-card">
+            <h3>Ruptures de stock</h3>
+            <div class="stat-value" id="stat-outofstock">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu: Produits -->
+    <div id="tab-products" class="tab-content">
+      <div class="admin-section">
+        <div class="section-header">
+          <h2>Gestion des produits</h2>
+          <button onclick="showAddProductModal()" class="btn btn-primary">+ Ajouter un produit</button>
+        </div>
+
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Bois</th>
+                <th>Prix</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body">
+              <tr><td colspan="7" style="text-align: center; padding: 2rem;">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu: Commandes -->
+    <div id="tab-orders" class="tab-content">
+      <div class="admin-section">
+        <div class="section-header">
+          <h2>Commandes</h2>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="hide-delivered" onchange="displayOrders()" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="hide-delivered" style="cursor: pointer; user-select: none;">Masquer les commandes livrées</label>
+          </div>
+        </div>
+
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Client</th>
+                <th>Email</th>
+                <th>Total</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table-body">
+              <tr><td colspan="7" style="text-align: center; padding: 2rem;">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu: Messages -->
+    <div id="tab-messages" class="tab-content">
+      <div class="admin-section">
+        <div class="section-header">
+          <h2>📬 Messages de contact</h2>
+        </div>
+
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Message</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="contacts-table-body">
+              <tr><td colspan="6" style="text-align: center; padding: 2rem;">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu: Boutique -->
+    <div id="tab-boutique" class="tab-content">
+      <div class="admin-section">
+        <div class="section-header">
+          <h2>🏡 Gestion de la Boutique</h2>
+        </div>
+
+        <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-light); border: 3px solid var(--wood-light);">
+          <h3 style="color: var(--wood-dark); margin-bottom: 1rem;">
+            📸 Images de la boutique
+          </h3>
+          <p style="color: var(--slate-gray); margin-bottom: 1.5rem;">
+            Gérez les photos de votre boutique qui s'affichent sur la page "La Boutique"
+          </p>
+
+          <!-- Upload nouvelle image -->
+          <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--cream); border-radius: 12px; border: 2px solid var(--wood-light);">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">
+              Ajouter une nouvelle photo
+            </label>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+              <input type="file" id="boutique-image-input" accept="image/*"
+                     style="flex: 1; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 8px;">
+              <button onclick="uploadBoutiqueImage()" class="btn btn-primary">
+                Ajouter
+              </button>
+            </div>
+            <small style="display: block; margin-top: 0.5rem; color: var(--slate-gray);">
+              💡 Les images du dossier /images/boutique/ sont automatiquement importées
+            </small>
+          </div>
+
+          <!-- Grille des images existantes -->
+          <div id="boutique-images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+            <!-- Images chargées dynamiquement -->
+          </div>
+
+          <div id="boutique-images-hint" style="margin-top: 1rem; padding: 1rem; background: var(--cream); border-radius: 8px; border: 2px solid var(--wood-light); display: none;">
+            <small style="color: var(--slate-gray);">
+              💡 <strong>Astuce :</strong> Utilisez les boutons ◀ ▶ pour réorganiser les images. L'ordre d'affichage correspond à l'ordre dans cette grille.
+            </small>
+          </div>
+
+          <div id="no-boutique-images" style="text-align: center; padding: 3rem; color: var(--slate-gray); display: none;">
+            Aucune image pour le moment. Ajoutez votre première photo de la boutique ! 📸
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu: Paramètres -->
+    <div id="tab-settings" class="tab-content">
+      <div class="admin-section">
+        <h2>Paramètres du site</h2>
+        <form id="settings-form" style="max-width: 600px;">
+          <div class="form-group">
+            <label>Email de contact</label>
+            <input type="email" id="setting-contact-email" value="contact@lepetitboutdebois.fr">
+          </div>
+          <div class="form-group">
+            <label>URL de La p'tite perlouze</label>
+            <input type="url" id="setting-perlouze-url" value="http://localhost:3000">
+          </div>
+          <button type="button" onclick="saveSettings()" class="btn btn-primary">Enregistrer</button>
+        </form>
+
+        <!-- Gestion des catégories -->
+        <div style="margin-top: 3rem; max-width: 600px;">
+          <h2 style="margin-bottom: 1.5rem;">Catégories de produits</h2>
+
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">Ajouter une catégorie</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" id="new-category-input" placeholder="Nom de la catégorie"
+                     style="flex: 1; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 8px; font-family: 'Raleway', sans-serif;">
+              <button type="button" onclick="addCategory()" class="btn btn-primary">Ajouter</button>
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 1rem; color: var(--wood-dark); font-weight: 600;">Catégories existantes</label>
+            <div id="categories-list" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+              <span style="color: var(--slate-gray);">Chargement...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal ajout/modification produit -->
+  <div id="product-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Ajouter un produit</h3>
+        <button class="modal-close" onclick="closeProductModal()">×</button>
+      </div>
+
+      <form id="product-form" class="product-form" onsubmit="saveProduct(event)">
+        <input type="hidden" id="product-id">
+
+        <div class="form-group">
+          <label>Nom du produit *</label>
+          <input type="text" id="product-name" required>
+        </div>
+
+        <div class="form-group">
+          <label>Catégorie *</label>
+          <select id="product-category" required>
+            <option value="Jeux">Jeux</option>
+            <option value="Accessoires">Accessoires</option>
+            <option value="Bijoux bois & pierres">Bijoux bois & pierres</option>
+            <option value="Objets décoratifs">Objets décoratifs</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Type de bois *</label>
+          <input type="text" id="product-wood" required placeholder="Ex: Chêne massif">
+        </div>
+
+        <div class="form-group">
+          <label>Prix (€) *</label>
+          <input type="number" id="product-price" step="0.01" min="0" required>
+        </div>
+
+        <div class="form-group">
+          <label>Stock *</label>
+          <input type="number" id="product-stock" min="0" required>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Images (jusqu'à 10)</label>
+          <input type="file" id="product-images" accept="image/*" multiple>
+          <small style="color: #6B7280; display: block; margin-top: 0.5rem;">
+            Vous pouvez sélectionner plusieurs images (maintenez Ctrl ou Cmd)
+          </small>
+        </div>
+
+        <div id="existing-images-container" style="display: none;" class="form-group full-width">
+          <label>Images existantes</label>
+          <div id="existing-images" class="images-grid"></div>
+          <small style="color: var(--wood-medium); display: block; margin-top: 0.5rem;">
+            💡 <strong>Astuce :</strong> Utilisez les boutons ◀ ▶ pour réorganiser les images. La première image sera l'image principale.
+          </small>
+        </div>
+
+        <div id="new-images-preview" style="display: none;" class="form-group full-width">
+          <label>Nouvelles images</label>
+          <div id="new-images-container" class="images-grid"></div>
+          <small style="color: var(--wood-medium); display: block; margin-top: 0.5rem;">
+            💡 <strong>Astuce :</strong> Utilisez les boutons ◀ ▶ pour réorganiser les images. La première image sera l'image principale.
+          </small>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Description</label>
+          <textarea id="product-description" rows="4"></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Lien vers La p'tite perlouze (optionnel)</label>
+          <input type="url" id="product-perlouze-link" placeholder="http://localhost:3000/produit/1">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" onclick="closeProductModal()" class="btn btn-secondary">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/modal.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

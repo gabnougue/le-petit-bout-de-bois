@@ -1,0 +1,904 @@
+/* ====================================
+   Variables CSS - Thème Bois Artisan
+   ==================================== */
+:root {
+  /* Couleurs principales - bois et nature */
+  --wood-light: #D4A574;
+  --wood-medium: #8B5A3C;
+  --wood-dark: #4A2C1F;
+  --cream: #F5F1E8;
+  --moss-green: #6B7F5A;
+  --slate-gray: #5C6B73;
+
+  /* Couleurs d'accent */
+  --accent-orange: #D97642;
+  --accent-green: #7FA650;
+
+  /* Ombres et effets */
+  --shadow-light: 0 2px 8px rgba(74, 44, 31, 0.1);
+  --shadow-medium: 0 4px 16px rgba(74, 44, 31, 0.15);
+  --shadow-strong: 0 6px 24px rgba(74, 44, 31, 0.25);
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* ====================================
+   Reset et styles de base
+   ==================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Raleway', 'Segoe UI', 'Roboto', sans-serif;
+  background: linear-gradient(135deg, var(--cream) 0%, #E8DCC8 100%);
+  color: var(--wood-dark);
+  line-height: 1.6;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Polices pour les titres */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Merriweather', serif;
+  font-weight: 700;
+}
+
+/* Effet de texture bois en arrière-plan */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 90, 60, 0.03) 2px,
+      rgba(139, 90, 60, 0.03) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ====================================
+   Header - Enseigne en bois suspendue
+   ==================================== */
+header {
+  position: relative;
+  padding: 2rem 1rem;
+  text-align: center;
+  z-index: 10;
+}
+
+/* Planche suspendue pour le titre */
+.site-title {
+  display: inline-block;
+  position: relative;
+  background: linear-gradient(135deg, var(--wood-light) 0%, var(--wood-medium) 100%);
+  padding: 1.5rem 3rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-strong);
+  transform: rotate(-1deg);
+  animation: gentle-swing 6s ease-in-out infinite;
+}
+
+/* Effet de suspension avec cordes/clous */
+.site-title::before,
+.site-title::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  width: 3px;
+  height: 30px;
+  background: linear-gradient(to bottom, #8B7355, #5C4A3A);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.site-title::before {
+  left: 15%;
+}
+
+.site-title::after {
+  right: 15%;
+}
+
+/* Clous en haut de la planche */
+.site-title .nail {
+  position: absolute;
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #9CA3AF 0%, #4B5563 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.site-title .nail:first-of-type {
+  left: 15%;
+}
+
+.site-title .nail:last-of-type {
+  right: 15%;
+}
+
+.site-title h1 {
+  font-family: 'Merriweather', serif;
+  font-size: 2.5rem;
+  color: var(--cream);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.site-subtitle {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  color: var(--wood-medium);
+  font-style: italic;
+}
+
+/* Animation de balancement doux */
+@keyframes gentle-swing {
+  0%, 100% {
+    transform: rotate(-1deg);
+  }
+  50% {
+    transform: rotate(1deg);
+  }
+}
+
+/* ====================================
+   Zone de transition vers La p'tite perlouze
+   ==================================== */
+.portal-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 120px;
+  height: 120px;
+}
+
+.wood-portal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  transition: transform var(--transition-normal);
+}
+
+.wood-portal:hover {
+  transform: scale(1.1);
+}
+
+/* Effet de fente dans le bois */
+.wood-crack {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--wood-medium) 0%, var(--wood-dark) 100%);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: var(--shadow-strong), inset 0 0 20px rgba(0, 0, 0, 0.3);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Aperçu de l'autre univers (pierres) */
+.wood-crack::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  height: 70%;
+  background: radial-gradient(circle, #E8B4F8 0%, #B794F6 50%, #9333EA 100%);
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.wood-crack::after {
+  content: '→';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  z-index: 1;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: var(--shadow-strong), inset 0 0 20px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(147, 51, 234, 0.3);
+  }
+  50% {
+    box-shadow: var(--shadow-strong), inset 0 0 20px rgba(0, 0, 0, 0.3),
+                0 0 25px rgba(147, 51, 234, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.portal-label {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--wood-medium);
+  white-space: nowrap;
+  background: var(--cream);
+  padding: 2px 8px;
+  border-radius: 4px;
+  box-shadow: var(--shadow-light);
+}
+
+/* ====================================
+   Navigation
+   ==================================== */
+nav {
+  background: linear-gradient(135deg, var(--wood-medium) 0%, var(--wood-dark) 100%);
+  padding: 1rem 0;
+  box-shadow: var(--shadow-medium);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+nav a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  color: var(--cream);
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+nav a::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--accent-orange);
+  transform: translateX(-100%);
+  transition: transform var(--transition-normal);
+}
+
+nav a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+nav a:hover::before {
+  transform: translateX(0);
+}
+
+nav a.active {
+  background: var(--accent-orange);
+  color: white;
+}
+
+/* Style pour le compteur de panier */
+#cart-count {
+  opacity: 0.9;
+}
+
+nav a.active #cart-count {
+  color: white;
+  opacity: 1;
+}
+
+/* ====================================
+   Conteneur principal
+   ==================================== */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ====================================
+   Cartes produits
+   ==================================== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.product-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-medium);
+  transition: all var(--transition-normal);
+  position: relative;
+  border: 3px solid var(--wood-light);
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, var(--wood-light), var(--accent-orange));
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  z-index: -1;
+}
+
+.product-card:hover {
+  transform: translateY(-8px) rotate(1deg);
+  box-shadow: var(--shadow-strong);
+}
+
+.product-card:hover::before {
+  opacity: 0.3;
+}
+
+.product-image {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  background: linear-gradient(135deg, var(--cream), #DDD);
+}
+
+.product-info {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.product-category {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--wood-medium);
+  background: var(--cream);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  margin-bottom: 0.5rem;
+}
+
+.product-name {
+  font-size: 1.25rem;
+  color: var(--wood-dark);
+  margin: 0.5rem 0;
+  font-weight: 600;
+}
+
+.product-wood {
+  font-size: 0.9rem;
+  color: var(--moss-green);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.product-description {
+  font-size: 0.95rem;
+  color: var(--slate-gray);
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.product-price {
+  font-size: 1.5rem;
+  color: var(--accent-orange);
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+/* Lien vers La p'tite perlouze */
+.perlouze-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #9333EA;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(147, 51, 234, 0.1);
+  margin-top: 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.perlouze-link:hover {
+  background: rgba(147, 51, 234, 0.2);
+  transform: translateX(4px);
+}
+
+/* ====================================
+   Boutons
+   ==================================== */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--wood-medium), var(--wood-dark));
+  color: white;
+  box-shadow: var(--shadow-medium);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+  background: linear-gradient(135deg, var(--wood-dark), #3A1C0F);
+}
+
+.btn-secondary {
+  background: var(--cream);
+  color: var(--wood-dark);
+  border: 2px solid var(--wood-medium);
+}
+
+.btn-secondary:hover {
+  background: var(--wood-light);
+  color: white;
+}
+
+/* ====================================
+   Animations de copeaux de bois
+   ==================================== */
+.wood-chip {
+  position: fixed;
+  width: 20px;
+  height: 8px;
+  background: linear-gradient(to right, var(--wood-light), var(--wood-medium));
+  border-radius: 4px;
+  pointer-events: none;
+  animation: fall-and-spin 8s linear infinite;
+  opacity: 0;
+}
+
+@keyframes fall-and-spin {
+  0% {
+    opacity: 0;
+    transform: translateY(-50px) rotate(0deg);
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg);
+  }
+}
+
+/* ====================================
+   Footer
+   ==================================== */
+footer {
+  background: linear-gradient(135deg, var(--wood-dark) 0%, #2A1610 100%);
+  color: var(--cream);
+  padding: 2rem 1rem;
+  text-align: center;
+  margin-top: 4rem;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+}
+
+footer p {
+  margin: 0.5rem 0;
+}
+
+footer a {
+  color: var(--accent-orange);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+footer a:hover {
+  color: var(--wood-light);
+  text-decoration: underline;
+}
+
+/* ====================================
+   Responsive
+   ==================================== */
+@media (max-width: 768px) {
+  .site-title h1 {
+    font-size: 1.75rem;
+  }
+
+  .site-title {
+    padding: 1rem 2rem;
+  }
+
+  .portal-container {
+    width: 80px;
+    height: 80px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  nav ul {
+    gap: 0.25rem;
+    row-gap: 10px;
+  }
+
+  nav li {
+    margin-top: 10px;
+  }
+
+  nav a {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-title h1 {
+    font-size: 1.5rem;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ====================================
+   Modales personnalisées
+   ==================================== */
+.custom-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(74, 44, 31, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.custom-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.custom-modal .modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: var(--shadow-strong), 0 0 40px rgba(74, 44, 31, 0.4);
+  border: 4px solid var(--wood-light);
+  position: relative;
+  animation: slideIn 0.3s ease;
+  text-align: center;
+  overflow: visible;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, var(--wood-light), var(--wood-medium));
+  border-radius: 16px;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+.modal-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.modal-title {
+  font-family: 'Merriweather', serif;
+  font-size: 1.75rem;
+  color: var(--wood-dark);
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.modal-message {
+  font-size: 1.1rem;
+  color: var(--slate-gray);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.modal-btn {
+  padding: 0.875rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: 'Raleway', sans-serif;
+  min-width: 120px;
+}
+
+.modal-btn-confirm {
+  background: var(--cream);
+  color: var(--wood-dark);
+  border: 2px solid var(--slate-gray);
+  box-shadow: var(--shadow-light);
+}
+
+.modal-btn-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+  background: #E8DCC8;
+  border-color: var(--wood-medium);
+}
+
+.modal-btn-cancel {
+  background: linear-gradient(135deg, var(--wood-medium), var(--wood-dark));
+  color: white;
+  border: none;
+  box-shadow: var(--shadow-medium);
+}
+
+.modal-btn-cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+  background: linear-gradient(135deg, var(--wood-dark), #3A1C0F);
+}
+
+.modal-btn-ok {
+  background: linear-gradient(135deg, var(--accent-orange), var(--wood-medium));
+  color: white;
+  box-shadow: var(--shadow-medium);
+}
+
+.modal-btn-ok:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ====================================
+   Animations de transition de page
+   ==================================== */
+.page-transition {
+  animation: pageTransition 0.6s ease-in;
+}
+
+@keyframes pageTransition {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ====================================
+   Formulaires
+   ==================================== */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--wood-dark);
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--wood-light);
+  border-radius: 8px;
+  background: var(--cream);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--wood-medium);
+}
+
+/* ====================================
+   Curseur de prix personnalisé
+   ==================================== */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  background: #e0e0e0;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Le background sera géré dynamiquement par JavaScript */
+}
+
+input[type="range"]:hover {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(139, 90, 60, 0.3);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0;
+  height: 0;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 12px;
+  border-radius: 6px;
+  background: transparent;
+}
+
+/* ====================================
+   Bouton de suppression dans le panier
+   ==================================== */
+.btn-delete:hover {
+  background: #E8DCC8 !important;
+  border-color: var(--wood-medium) !important;
+  color: var(--wood-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-light);
+}
+
+/* ====================================
+   Animations pour notifications mobile
+   ==================================== */
+@keyframes slideInBottom {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes slideOutBottom {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(100px);
+  }
+}
+
+/* ====================================
+   Bouton Ajouter au panier sur mobile
+   ==================================== */
+@media (max-width: 768px) {
+  .btn-add-cart .cart-text {
+    display: none;
+  }
+
+  .btn-add-cart .cart-icon {
+    font-size: 1.5rem;
+  }
+
+  .btn-add-cart {
+    background: linear-gradient(135deg, #A06B4D, #5A3626) !important;
+    box-shadow: 0 4px 12px rgba(160, 107, 77, 0.3) !important;
+  }
+
+  .btn-add-cart:hover {
+    background: linear-gradient(135deg, #B07A5A, #6A4230) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(176, 122, 90, 0.4) !important;
+  }
+}
