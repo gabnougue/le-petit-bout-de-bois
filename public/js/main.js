@@ -1,5 +1,5 @@
 // ====================================
-// Script principal - Le petit bout de bois
+// Script principal - Le ptit bout de bois
 // ====================================
 
 // Gestion du panier

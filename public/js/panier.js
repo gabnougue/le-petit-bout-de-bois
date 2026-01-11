@@ -1,5 +1,5 @@
 // ====================================
-// Script panier - Le petit bout de bois
+// Script panier - Le ptit bout de bois
 // ====================================
 
 // Afficher les articles du panier
@@ -272,7 +272,7 @@ async function submitOrder(event) {
   const form = event.target;
   const formData = new FormData(form);
 
-  // Récupérer le panier depuis localStorage (clé spécifique au petit bout de bois)
+  // Récupérer le panier depuis localStorage (clé spécifique au ptit bout de bois)
   const cartItems = JSON.parse(localStorage.getItem('cart-bois') || '[]');
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shippingCost = shippingDetails?.shippingCost || 0;

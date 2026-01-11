@@ -19,7 +19,7 @@ async function sendOrderNotification(order, items) {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL,
       to: process.env.CONTACT_EMAIL,
-      subject: `🪵 Nouvelle commande #${order.id} - Le petit bout de bois`,
+      subject: `🪵 Nouvelle commande #${order.id} - Le ptit bout de bois`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -76,7 +76,7 @@ async function sendOrderNotification(order, items) {
               </div>
             </div>
             <div class="footer">
-              <p>Le petit bout de bois - Créations artisanales en bois</p>
+              <p>Le ptit bout de bois - Créations artisanales en bois</p>
             </div>
           </div>
         </body>
@@ -103,7 +103,7 @@ async function sendContactNotification(contact) {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL,
       to: process.env.CONTACT_EMAIL,
-      subject: `💬 Nouveau message de ${contact.name} - Le petit bout de bois`,
+      subject: `💬 Nouveau message de ${contact.name} - Le ptit bout de bois`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -148,7 +148,7 @@ async function sendContactNotification(contact) {
               </div>
             </div>
             <div class="footer">
-              <p>Le petit bout de bois - Créations artisanales en bois</p>
+              <p>Le ptit bout de bois - Créations artisanales en bois</p>
             </div>
           </div>
         </body>
@@ -180,7 +180,7 @@ async function sendCustomerOrderEmail(order, items, status) {
       case 'pending':
         emoji = '⏳';
         title = 'Commande reçue';
-        subject = `Commande #${order.id} reçue - Le petit bout de bois`;
+        subject = `Commande #${order.id} reçue - Le ptit bout de bois`;
         message = `
           <p>Merci pour votre commande ! Nous l'avons bien reçue et elle sera bientôt prise en charge par Jean-Michel.</p>
           <p>Vous recevrez un email dès que votre commande sera confirmée.</p>
@@ -190,7 +190,7 @@ async function sendCustomerOrderEmail(order, items, status) {
       case 'confirmed':
         emoji = '✅';
         title = 'Commande confirmée';
-        subject = `Commande #${order.id} confirmée - Le petit bout de bois`;
+        subject = `Commande #${order.id} confirmée - Le ptit bout de bois`;
         message = `
           <p>Bonne nouvelle ! Jean-Michel a pris en charge votre commande et commence à préparer vos créations artisanales avec soin.</p>
           <p>Vous recevrez un email dès que votre commande sera expédiée.</p>
@@ -200,7 +200,7 @@ async function sendCustomerOrderEmail(order, items, status) {
       case 'shipped':
         emoji = '📦';
         title = 'Commande expédiée';
-        subject = `Commande #${order.id} expédiée - Le petit bout de bois`;
+        subject = `Commande #${order.id} expédiée - Le ptit bout de bois`;
         message = `
           <p>Votre commande a été expédiée ! Elle devrait arriver dans les prochains jours.</p>
           <p>Merci pour votre confiance et à bientôt ! 🪵</p>
@@ -260,7 +260,7 @@ async function sendCustomerOrderEmail(order, items, status) {
               </div>
             </div>
             <div class="footer">
-              <p><strong>Le petit bout de bois</strong></p>
+              <p><strong>Le ptit bout de bois</strong></p>
               <p>Créations artisanales en bois par Jean-Michel Nougué-Lecocq</p>
               <p style="margin-top: 10px; font-size: 0.85em;">
                 Une question ? Répondez simplement à cet email !

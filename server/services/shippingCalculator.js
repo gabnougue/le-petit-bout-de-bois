@@ -1,6 +1,6 @@
 /**
  * Service de calcul des frais de livraison
- * Le petit bout de bois - Créations en bois (objets volumineux)
+ * Le ptit bout de bois - Créations en bois (objets volumineux)
  */
 
 /**

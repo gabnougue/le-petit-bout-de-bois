@@ -94,7 +94,7 @@ const initDatabase = () => {
 
       // Insérer paramètres par défaut
       const defaultSettings = [
-        ['site_name', 'Le petit bout de bois'],
+        ['site_name', 'Le ptit bout de bois'],
         ['site_description', 'Créations artisanales en bois par Jean-Michel Nougué-Lecocq'],
         ['contact_email', 'contact@lepetitboutdebois.fr'],
         ['perlouze_url', 'http://localhost:3000']

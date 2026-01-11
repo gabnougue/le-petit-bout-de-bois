@@ -1,4 +1,4 @@
-# 🎯 Le petit bout de bois - Projet complet
+# 🎯 Le ptit bout de bois - Projet complet
 
 Récapitulatif complet du site e-commerce créé pour Jean-Michel Nougué-Lecocq.
 
@@ -383,7 +383,7 @@ PUT    /api/settings/:key         → Modifier paramètre (admin)
 
 ## 🌟 Différences avec La p'tite perlouze
 
-| Aspect | Le petit bout de bois | La p'tite perlouze |
+| Aspect | Le ptit bout de bois | La p'tite perlouze |
 |--------|----------------------|-------------------|
 | Couleur dominante | Brun/Chêne | Violet/Magenta |
 | Matériau | Bois | Pierres naturelles |
@@ -439,14 +439,14 @@ PUT    /api/settings/:key         → Modifier paramètre (admin)
 - ✨ **Yvonne Lecocq** : contact@laptiteperlouze.fr
 
 ### Sites
-- 🪵 Le petit bout de bois : http://localhost:3001 (dev)
+- 🪵 Le ptit bout de bois : http://localhost:3001 (dev)
 - ✨ La p'tite perlouze : http://localhost:3000 (dev)
 
 ---
 
 ## 🎉 Conclusion
 
-Le site **Le petit bout de bois** est maintenant complet et prêt à l'emploi !
+Le site **Le ptit bout de bois** est maintenant complet et prêt à l'emploi !
 
 ### Ce qui a été livré
 ✅ Site e-commerce complet et fonctionnel

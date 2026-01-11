@@ -87,7 +87,7 @@ app.get('/admin/dashboard', (req, res) => {
 // Démarrage du serveur
 app.listen(PORT, () => {
   console.log(`\n🪵 ════════════════════════════════════════ 🪵`);
-  console.log(`   Le petit bout de bois - Serveur démarré`);
+  console.log(`   Le ptit bout de bois - Serveur démarré`);
   console.log(`🪵 ════════════════════════════════════════ 🪵`);
   console.log(`\n🌳 Serveur accessible sur: http://localhost:${PORT}`);
   console.log(`📦 Mode: ${process.env.NODE_ENV || 'development'}`);

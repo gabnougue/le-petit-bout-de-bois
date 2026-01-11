@@ -6,8 +6,8 @@ Guide pour relier les deux sites et créer un écosystème harmonieux.
 
 ## 🌟 Vue d'ensemble
 
-**Le petit bout de bois** et **La p'tite perlouze** sont deux sites jumeaux qui se complètent :
-- 🪵 **Le petit bout de bois** : créations en bois (jeux, accessoires)
+**Le ptit bout de bois** et **La p'tite perlouze** sont deux sites jumeaux qui se complètent :
+- 🪵 **Le ptit bout de bois** : créations en bois (jeux, accessoires)
 - ✨ **La p'tite perlouze** : bijoux en pierres naturelles
 
 Certains produits combinent les deux univers (bijoux bois & pierres).
@@ -20,7 +20,7 @@ Certains produits combinent les deux univers (bijoux bois & pierres).
 En haut à droite de chaque site, un portail circulaire animé permet de basculer entre les deux univers.
 
 ### Design
-- **Sur Le petit bout de bois** :
+- **Sur Le ptit bout de bois** :
   - Portail avec effet de "fente dans le bois"
   - Aperçu de l'univers pierres (couleurs violettes/magentas)
   - Label : "Pierres ✨"
@@ -126,7 +126,7 @@ Les produits peuvent avoir des liens vers des produits complémentaires sur l'au
 
 ### Exemples de liens logiques
 
-#### Depuis Le petit bout de bois → La p'tite perlouze
+#### Depuis Le ptit bout de bois → La p'tite perlouze
 1. **Porte-bracelet en bois** → Catégorie bracelets
    ```
    http://localhost:3000/catalogue?category=Bracelets
@@ -142,7 +142,7 @@ Les produits peuvent avoir des liens vers des produits complémentaires sur l'au
    http://localhost:3000/produit/5
    ```
 
-#### Depuis La p'tite perlouze → Le petit bout de bois
+#### Depuis La p'tite perlouze → Le ptit bout de bois
 1. **Bracelet en améthyste** → Porte-bracelet assorti
    ```
    http://localhost:3001/catalogue?category=Accessoires
@@ -157,7 +157,7 @@ Les produits peuvent avoir des liens vers des produits complémentaires sur l'au
 
 1. Se connecter à l'admin du site
 2. Modifier un produit
-3. Remplir le champ "Lien vers La p'tite perlouze" (ou "Lien vers Le petit bout de bois")
+3. Remplir le champ "Lien vers La p'tite perlouze" (ou "Lien vers Le ptit bout de bois")
 4. Enregistrer
 
 Le lien apparaîtra automatiquement sur la fiche produit :
@@ -171,7 +171,7 @@ Le lien apparaîtra automatiquement sur la fiche produit :
 
 ### Variables d'environnement
 
-**Dans `.env` de Le petit bout de bois :**
+**Dans `.env` de Le ptit bout de bois :**
 ```env
 PERLOUZE_URL=http://localhost:3000
 ```
@@ -182,14 +182,14 @@ BOIS_URL=http://localhost:3001
 ```
 
 ### Ports par défaut
-- 🪵 Le petit bout de bois : **3001**
+- 🪵 Le ptit bout de bois : **3001**
 - ✨ La p'tite perlouze : **3000**
 
 ---
 
 ## 📱 Messages croisés
 
-### Sur Le petit bout de bois
+### Sur Le ptit bout de bois
 
 Section "Univers jumeau" sur la page d'accueil :
 ```html
@@ -205,9 +205,9 @@ Section "Univers jumeau" sur la page d'accueil :
 Section similaire à ajouter :
 ```html
 <section class="twin-universe">
-  <h2>🪵 Découvrez aussi Le petit bout de bois</h2>
+  <h2>🪵 Découvrez aussi Le ptit bout de bois</h2>
   <p>Créations artisanales en bois qui s'harmonisent avec nos bijoux...</p>
-  <a href="http://localhost:3001">Visiter Le petit bout de bois →</a>
+  <a href="http://localhost:3001">Visiter Le ptit bout de bois →</a>
 </section>
 ```
 
@@ -255,7 +255,7 @@ server {
 ```
 
 ### Sur des sous-domaines
-- **bois.example.com** → Le petit bout de bois
+- **bois.example.com** → Le ptit bout de bois
 - **pierres.example.com** → La p'tite perlouze
 
 Adapter les URLs dans les `.env` respectifs.
