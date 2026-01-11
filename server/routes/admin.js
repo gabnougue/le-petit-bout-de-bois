@@ -433,12 +433,12 @@ router.get('/stats', requireAdmin, (req, res) => {
   db.get('SELECT COUNT(*) as count FROM products', [], (err, row) => {
     stats.totalProducts = row ? row.count : 0;
 
-    // Nombre de commandes
-    db.get('SELECT COUNT(*) as count FROM orders', [], (err, row) => {
-      stats.totalOrders = row ? row.count : 0;
+    // Nombre de commandes en cours (toutes sauf livrées)
+    db.get('SELECT COUNT(*) as count FROM orders WHERE status != "delivered"', [], (err, row) => {
+      stats.ongoingOrders = row ? row.count : 0;
 
-      // Chiffre d'affaires total
-      db.get('SELECT SUM(total_amount) as total FROM orders WHERE status = "confirmed"', [], (err, row) => {
+      // Chiffre d'affaires total (uniquement commandes livrées)
+      db.get('SELECT SUM(total_amount) as total FROM orders WHERE status = "delivered"', [], (err, row) => {
         stats.totalRevenue = row && row.total ? row.total : 0;
 
         // Produits en rupture de stock

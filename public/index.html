@@ -52,42 +52,8 @@
       <h2 style="text-align: center; font-size: 2rem; color: var(--wood-dark); margin-bottom: 2rem;">
         🛠️ Nos créations
       </h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-        <!-- Catégorie Jeux -->
-        <div class="category-card" onclick="window.location.href='/catalogue?category=Jeux'"
-             style="background: white; border-radius: 12px; padding: 2rem; text-align: center;
-                    box-shadow: var(--shadow-medium); cursor: pointer; transition: transform 0.3s ease;
-                    border: 3px solid var(--wood-light);"
-             onmouseover="this.style.transform='translateY(-8px)'"
-             onmouseout="this.style.transform='translateY(0)'">
-          <div style="font-size: 4rem; margin-bottom: 1rem;">🎲</div>
-          <h3 style="color: var(--wood-dark); font-size: 1.5rem; margin-bottom: 0.5rem;">Jeux en bois</h3>
-          <p style="color: var(--slate-gray);">Petits chevaux, dominos, et jeux traditionnels</p>
-        </div>
-
-        <!-- Catégorie Accessoires -->
-        <div class="category-card" onclick="window.location.href='/catalogue?category=Accessoires'"
-             style="background: white; border-radius: 12px; padding: 2rem; text-align: center;
-                    box-shadow: var(--shadow-medium); cursor: pointer; transition: transform 0.3s ease;
-                    border: 3px solid var(--wood-light);"
-             onmouseover="this.style.transform='translateY(-8px)'"
-             onmouseout="this.style.transform='translateY(0)'">
-          <div style="font-size: 4rem; margin-bottom: 1rem;">🪑</div>
-          <h3 style="color: var(--wood-dark); font-size: 1.5rem; margin-bottom: 0.5rem;">Accessoires</h3>
-          <p style="color: var(--slate-gray);">Porte-bracelets, dessous de verre, porte-lunettes</p>
-        </div>
-
-        <!-- Catégorie Bijoux mixtes -->
-        <div class="category-card" onclick="window.location.href='/catalogue?category=Bijoux bois & pierres'"
-             style="background: white; border-radius: 12px; padding: 2rem; text-align: center;
-                    box-shadow: var(--shadow-medium); cursor: pointer; transition: transform 0.3s ease;
-                    border: 3px solid var(--wood-light);"
-             onmouseover="this.style.transform='translateY(-8px)'"
-             onmouseout="this.style.transform='translateY(0)'">
-          <div style="font-size: 4rem; margin-bottom: 1rem;">💍</div>
-          <h3 style="color: var(--wood-dark); font-size: 1.5rem; margin-bottom: 0.5rem;">Bijoux bois & pierres</h3>
-          <p style="color: var(--slate-gray);">Alliance du bois et des pierres naturelles</p>
-        </div>
+      <div id="categories-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+        <!-- Les catégories seront chargées dynamiquement -->
       </div>
     </section>
 
@@ -162,7 +128,7 @@
       <a href="http://localhost:3000">La p'tite perlouze</a>
     </p>
     <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
-      © 2025 Le petit bout de bois - Fait avec passion 🪵
+      © 2026 Le petit bout de bois - Fait avec passion 🪵
     </p>
   </footer>
 
@@ -170,6 +136,38 @@
   <script src="/js/modal.js"></script>
   <script src="/js/main.js"></script>
   <script>
+    // Charger les catégories
+    async function loadCategories() {
+      try {
+        const response = await fetch('/api/settings/categories');
+        const categories = await response.json();
+
+        const container = document.getElementById('categories-grid');
+
+        if (categories.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: var(--slate-gray); grid-column: 1 / -1;">Aucune catégorie disponible pour le moment.</p>';
+          return;
+        }
+
+        container.innerHTML = categories.map(category => `
+          <div class="category-card" onclick="window.location.href='/catalogue?category=${encodeURIComponent(category.name)}'"
+               style="background: white; border-radius: 12px; padding: 2rem; text-align: center;
+                      box-shadow: var(--shadow-medium); cursor: pointer; transition: transform 0.3s ease;
+                      border: 3px solid var(--wood-light);"
+               onmouseover="this.style.transform='translateY(-8px)'"
+               onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">${category.emoji || '🪵'}</div>
+            <h3 style="color: var(--wood-dark); font-size: 1.5rem; margin-bottom: 0.5rem;">${category.name}</h3>
+            <p style="color: var(--slate-gray);">${category.description || ''}</p>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Erreur chargement catégories:', error);
+        const container = document.getElementById('categories-grid');
+        container.innerHTML = '<p style="text-align: center; color: var(--slate-gray); grid-column: 1 / -1;">Impossible de charger les catégories pour le moment.</p>';
+      }
+    }
+
     // Charger les produits phares
     async function loadFeaturedProducts() {
       try {
@@ -205,6 +203,7 @@
     }
 
     // Charger au démarrage
+    loadCategories();
     loadFeaturedProducts();
   </script>
 

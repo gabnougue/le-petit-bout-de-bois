@@ -65,15 +65,15 @@ router.get('/categories', (req, res) => {
 
 // Ajouter une catégorie (admin)
 router.post('/categories', requireAdmin, (req, res) => {
-  const { name } = req.body;
+  const { name, emoji, description } = req.body;
 
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Nom de catégorie requis' });
   }
 
   db.run(
-    'INSERT INTO categories (name) VALUES (?)',
-    [name.trim()],
+    'INSERT INTO categories (name, emoji, description) VALUES (?, ?, ?)',
+    [name.trim(), emoji || '🪵', description || ''],
     function(err) {
       if (err) {
         if (err.message.includes('UNIQUE')) {
@@ -87,7 +87,47 @@ router.post('/categories', requireAdmin, (req, res) => {
         message: 'Catégorie ajoutée',
         category: {
           id: this.lastID,
-          name: name.trim()
+          name: name.trim(),
+          emoji: emoji || '🪵',
+          description: description || ''
+        }
+      });
+    }
+  );
+});
+
+// Modifier une catégorie (admin)
+router.put('/categories/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const { name, emoji, description } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Nom de catégorie requis' });
+  }
+
+  db.run(
+    'UPDATE categories SET name = ?, emoji = ?, description = ? WHERE id = ?',
+    [name.trim(), emoji || '🪵', description || '', id],
+    function(err) {
+      if (err) {
+        if (err.message.includes('UNIQUE')) {
+          return res.status(400).json({ error: 'Cette catégorie existe déjà' });
+        }
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Catégorie non trouvée' });
+      }
+
+      res.json({
+        success: true,
+        message: 'Catégorie modifiée',
+        category: {
+          id: parseInt(id),
+          name: name.trim(),
+          emoji: emoji || '🪵',
+          description: description || ''
         }
       });
     }
@@ -126,6 +166,91 @@ router.delete('/categories/:id', requireAdmin, (req, res) => {
         res.json({
           success: true,
           message: 'Catégorie supprimée'
+        });
+      });
+    }
+  );
+});
+
+// ===== GESTION DES TYPES DE BOIS =====
+
+// Récupérer tous les types de bois (public)
+router.get('/wood-types', (req, res) => {
+  db.all(
+    'SELECT * FROM wood_types ORDER BY name ASC',
+    [],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(rows);
+    }
+  );
+});
+
+// Ajouter un type de bois (admin)
+router.post('/wood-types', requireAdmin, (req, res) => {
+  const { name } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Nom de type de bois requis' });
+  }
+
+  db.run(
+    'INSERT INTO wood_types (name) VALUES (?)',
+    [name.trim()],
+    function(err) {
+      if (err) {
+        if (err.message.includes('UNIQUE')) {
+          return res.status(400).json({ error: 'Ce type de bois existe déjà' });
+        }
+        return res.status(500).json({ error: err.message });
+      }
+
+      res.json({
+        success: true,
+        message: 'Type de bois ajouté',
+        woodType: {
+          id: this.lastID,
+          name: name.trim()
+        }
+      });
+    }
+  );
+});
+
+// Supprimer un type de bois (admin)
+router.delete('/wood-types/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+
+  // Vérifier si des produits utilisent ce type de bois
+  db.get(
+    'SELECT COUNT(*) as count FROM products WHERE wood_type = (SELECT name FROM wood_types WHERE id = ?)',
+    [id],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (row.count > 0) {
+        return res.status(400).json({
+          error: `Impossible de supprimer : ${row.count} produit(s) utilisent ce type de bois`
+        });
+      }
+
+      // Supprimer le type de bois
+      db.run('DELETE FROM wood_types WHERE id = ?', [id], function(err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Type de bois non trouvé' });
+        }
+
+        res.json({
+          success: true,
+          message: 'Type de bois supprimé'
         });
       });
     }

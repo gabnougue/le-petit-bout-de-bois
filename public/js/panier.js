@@ -74,16 +74,38 @@ function displayCartItems() {
   `;
 }
 
+// Variable globale pour stocker les détails de livraison
+let shippingDetails = null;
+
 // Afficher le récapitulatif
-function displayCartSummary() {
+async function displayCartSummary() {
   const container = document.getElementById('cart-summary');
-  const total = cart.getTotal();
+  const subtotal = cart.getTotal();
   const itemCount = cart.getItemCount();
 
   if (cart.items.length === 0) {
     container.style.display = 'none';
     return;
   }
+
+  // Calculer les frais de livraison via l'API
+  try {
+    const response = await fetch('/api/shipping/calculate?subtotal=' + subtotal);
+    shippingDetails = await response.json();
+  } catch (error) {
+    console.error('Erreur calcul frais de livraison:', error);
+    shippingDetails = {
+      shippingCost: 0,
+      total: subtotal,
+      message: ''
+    };
+  }
+
+  const shippingCost = shippingDetails.shippingCost || 0;
+  const total = shippingDetails.total || subtotal;
+  const shippingText = shippingCost === 0
+    ? '<span style="color: var(--moss-green); font-weight: 600;">Gratuite</span>'
+    : `<span style="color: var(--wood-dark); font-weight: 600;">${shippingCost.toFixed(2)} €</span>`;
 
   container.style.display = 'block';
 
@@ -92,13 +114,18 @@ function displayCartSummary() {
 
     <div style="margin-bottom: 1.5rem;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-        <span style="color: var(--slate-gray);">Articles (${itemCount})</span>
-        <span style="color: var(--wood-dark); font-weight: 600;">${total.toFixed(2)} €</span>
+        <span style="color: var(--slate-gray);">Sous-total</span>
+        <span style="color: var(--wood-dark); font-weight: 600;">${subtotal.toFixed(2)} €</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
         <span style="color: var(--slate-gray);">Livraison</span>
-        <span style="color: var(--moss-green); font-weight: 600;">Gratuite</span>
+        ${shippingText}
       </div>
+      ${shippingDetails.message ? `
+        <div style="font-size: 0.85rem; color: var(--accent-orange); text-align: right; margin-top: 0.25rem; font-weight: 500;">
+          ${shippingDetails.message}
+        </div>
+      ` : ''}
       <div style="height: 2px; background: var(--cream); margin: 1rem 0;"></div>
       <div style="display: flex; justify-content: space-between; font-size: 1.3rem;">
         <span style="color: var(--wood-dark); font-weight: 700;">Total</span>
@@ -118,7 +145,7 @@ function displayCartSummary() {
                 border-left: 4px solid var(--accent-green);">
       <p style="font-size: 0.9rem; color: var(--wood-medium); margin: 0;">
         ✓ Paiement sécurisé<br>
-        ✓ Livraison gratuite<br>
+        ✓ Livraison ${shippingCost === 0 ? 'offerte dès 50€' : 'offerte dès 50€'}<br>
         ✓ Création artisanale
       </p>
     </div>
@@ -132,7 +159,7 @@ async function updateItemQuantity(productId, newQuantity) {
   } else {
     await cart.updateQuantity(productId, newQuantity);
     displayCartItems();
-    displayCartSummary();
+    await displayCartSummary();
   }
 }
 
@@ -149,7 +176,7 @@ async function removeFromCart(productId) {
   if (confirmed) {
     cart.removeItem(productId);
     displayCartItems();
-    displayCartSummary();
+    await displayCartSummary();
     cart.showNotification('Article supprimé du panier');
   }
 }
@@ -167,7 +194,7 @@ async function clearCart() {
   if (confirmed) {
     cart.clear();
     displayCartItems();
-    displayCartSummary();
+    await displayCartSummary();
     cart.showNotification('Panier vidé');
   }
 }
@@ -207,7 +234,9 @@ function cancelCheckout() {
 // Afficher le récapitulatif dans le formulaire de checkout
 function displayCheckoutSummary() {
   const container = document.getElementById('checkout-summary');
-  const total = cart.getTotal();
+  const subtotal = cart.getTotal();
+  const shippingCost = shippingDetails?.shippingCost || 0;
+  const total = shippingDetails?.total || subtotal;
 
   container.innerHTML = `
     ${cart.items.map(item => `
@@ -216,6 +245,17 @@ function displayCheckoutSummary() {
         <span style="font-weight: 600; color: var(--wood-dark);">${(item.price * item.quantity).toFixed(2)} €</span>
       </div>
     `).join('')}
+    <div style="height: 1px; background: var(--wood-light); margin: 0.75rem 0;"></div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+      <span style="color: var(--slate-gray);">Sous-total</span>
+      <span style="font-weight: 600; color: var(--wood-dark);">${subtotal.toFixed(2)} €</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+      <span style="color: var(--slate-gray);">Livraison</span>
+      <span style="font-weight: 600; color: ${shippingCost === 0 ? 'var(--moss-green)' : 'var(--wood-dark)'};">
+        ${shippingCost === 0 ? 'Gratuite' : shippingCost.toFixed(2) + ' €'}
+      </span>
+    </div>
     <div style="height: 2px; background: var(--wood-light); margin: 1rem 0;"></div>
     <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700;">
       <span style="color: var(--wood-dark);">Total</span>
@@ -234,7 +274,9 @@ async function submitOrder(event) {
 
   // Récupérer le panier depuis localStorage (clé spécifique au petit bout de bois)
   const cartItems = JSON.parse(localStorage.getItem('cart-bois') || '[]');
-  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shippingCost = shippingDetails?.shippingCost || 0;
+  const totalAmount = shippingDetails?.total || subtotal;
 
   const orderData = {
     customerName: formData.get('customerName'),
@@ -242,6 +284,8 @@ async function submitOrder(event) {
     customerPhone: formData.get('customerPhone'),
     customerAddress: formData.get('customerAddress'),
     items: cartItems,
+    subtotal: subtotal,
+    shippingCost: shippingCost,
     totalAmount: totalAmount,
     paymentMethod: 'card'
   };
@@ -265,7 +309,7 @@ async function submitOrder(event) {
     localStorage.removeItem('cart-bois');
 
     // Afficher le succès
-    showSuccessModal(result.orderId);
+    await showSuccessModal(result.orderId);
 
   } catch (error) {
     console.error('Erreur commande:', error);
@@ -274,7 +318,7 @@ async function submitOrder(event) {
 }
 
 // Afficher le modal de succès
-function showSuccessModal(orderId) {
+async function showSuccessModal(orderId) {
   const modal = document.createElement('div');
   modal.className = 'modal active';
   modal.innerHTML = `
@@ -298,13 +342,13 @@ function showSuccessModal(orderId) {
 
   // Actualiser l'affichage
   displayCartItems();
-  displayCartSummary();
+  await displayCartSummary();
 }
 
 // Initialisation
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   displayCartItems();
-  displayCartSummary();
+  await displayCartSummary();
 
   // Initialiser le formulaire de commande
   const checkoutForm = document.getElementById('checkout-form');

@@ -45,10 +45,28 @@
         🔍 Filtrer les créations
       </h3>
 
-      <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
-        <!-- Filtres par catégorie (chargés dynamiquement) -->
-        <div id="category-filters" style="display: flex; gap: 0.5rem; flex-wrap: wrap; flex: 1;">
-          <!-- Les boutons de catégories seront générés par JavaScript -->
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem;">
+        <!-- Conteneur des filtres catégorie et type de bois -->
+        <div style="flex: 1; min-width: 300px;">
+          <!-- Filtres par catégorie -->
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">
+              Catégorie
+            </label>
+            <div id="category-filters" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <!-- Les boutons de catégories seront générés par JavaScript -->
+            </div>
+          </div>
+
+          <!-- Filtres par type de bois -->
+          <div>
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">
+              Type de bois
+            </label>
+            <div id="wood-type-filters" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <!-- Les boutons de types de bois seront générés par JavaScript -->
+            </div>
+          </div>
         </div>
 
         <!-- Barre de recherche -->
@@ -100,7 +118,7 @@
       <a href="http://localhost:3000">La p'tite perlouze</a>
     </p>
     <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
-      © 2025 Le petit bout de bois - Fait avec passion 🪵
+      © 2026 Le petit bout de bois - Fait avec passion 🪵
     </p>
   </footer>
 

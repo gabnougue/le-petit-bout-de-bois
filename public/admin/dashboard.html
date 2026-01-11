@@ -54,7 +54,7 @@
             <div class="stat-value" id="stat-products">-</div>
           </div>
           <div class="stat-card">
-            <h3>Commandes</h3>
+            <h3>Commandes en cours</h3>
             <div class="stat-value" id="stat-orders">-</div>
           </div>
           <div class="stat-card">
@@ -134,23 +134,26 @@
     <div id="tab-messages" class="tab-content">
       <div class="admin-section">
         <div class="section-header">
-          <h2>📬 Messages de contact</h2>
+          <h2>💬 Conversations clients</h2>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="checkbox" id="hide-closed-threads" onchange="loadThreads()" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="hide-closed-threads" style="cursor: pointer; user-select: none;">Masquer les conversations closes</label>
+          </div>
         </div>
 
         <div class="data-table">
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Message</th>
                 <th>Statut</th>
+                <th>Client</th>
+                <th>Dernier message</th>
+                <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="contacts-table-body">
-              <tr><td colspan="6" style="text-align: center; padding: 2rem;">Chargement...</td></tr>
+            <tbody id="threads-table-body">
+              <tr><td colspan="5" style="text-align: center; padding: 2rem;">Chargement...</td></tr>
             </tbody>
           </table>
         </div>
@@ -184,9 +187,6 @@
                 Ajouter
               </button>
             </div>
-            <small style="display: block; margin-top: 0.5rem; color: var(--slate-gray);">
-              💡 Les images du dossier /images/boutique/ sont automatiquement importées
-            </small>
           </div>
 
           <!-- Grille des images existantes -->
@@ -224,21 +224,51 @@
         </form>
 
         <!-- Gestion des catégories -->
-        <div style="margin-top: 3rem; max-width: 600px;">
+        <div style="margin-top: 3rem; max-width: 800px;">
           <h2 style="margin-bottom: 1.5rem;">Catégories de produits</h2>
 
           <div style="margin-bottom: 1.5rem;">
             <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">Ajouter une catégorie</label>
-            <div style="display: flex; gap: 0.5rem;">
-              <input type="text" id="new-category-input" placeholder="Nom de la catégorie"
-                     style="flex: 1; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 8px; font-family: 'Raleway', sans-serif;">
-              <button type="button" onclick="addCategory()" class="btn btn-primary">Ajouter</button>
+            <div style="display: grid; gap: 0.75rem; margin-bottom: 0.75rem;">
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="new-category-input" placeholder="Nom de la catégorie"
+                       style="flex: 2; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 8px; font-family: 'Raleway', sans-serif;">
+                <input type="text" id="new-category-emoji" placeholder="Emoji" maxlength="4"
+                       style="flex: 0 0 100px; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 8px; font-family: 'Raleway', sans-serif;">
+                <input type="text" id="new-category-description" placeholder="Description courte"
+                       style="flex: 2; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 8px; font-family: 'Raleway', sans-serif;">
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button type="button" onclick="addCategory()" id="category-submit-btn" class="btn btn-primary">Ajouter la catégorie</button>
+                <button type="button" onclick="cancelEditCategory()" id="category-cancel-btn" class="btn btn-secondary" style="display: none;">Annuler</button>
+              </div>
             </div>
           </div>
 
           <div>
             <label style="display: block; margin-bottom: 1rem; color: var(--wood-dark); font-weight: 600;">Catégories existantes</label>
-            <div id="categories-list" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            <div id="categories-list" style="display: grid; gap: 0.75rem;">
+              <span style="color: var(--slate-gray);">Chargement...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gestion des types de bois -->
+        <div style="margin-top: 3rem; max-width: 600px;">
+          <h2 style="margin-bottom: 1.5rem;">Types de bois</h2>
+
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">Ajouter un type de bois</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" id="new-wood-type-input" placeholder="Nom du type de bois"
+                     style="flex: 1; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 8px; font-family: 'Raleway', sans-serif;">
+              <button type="button" onclick="addWoodType()" class="btn btn-primary">Ajouter</button>
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 1rem; color: var(--wood-dark); font-weight: 600;">Types de bois existants</label>
+            <div id="wood-types-list" style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
               <span style="color: var(--slate-gray);">Chargement...</span>
             </div>
           </div>
@@ -275,7 +305,9 @@
 
         <div class="form-group">
           <label>Type de bois *</label>
-          <input type="text" id="product-wood" required placeholder="Ex: Chêne massif">
+          <select id="product-wood" required>
+            <option value="">-- Sélectionner --</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -299,17 +331,11 @@
         <div id="existing-images-container" style="display: none;" class="form-group full-width">
           <label>Images existantes</label>
           <div id="existing-images" class="images-grid"></div>
-          <small style="color: var(--wood-medium); display: block; margin-top: 0.5rem;">
-            💡 <strong>Astuce :</strong> Utilisez les boutons ◀ ▶ pour réorganiser les images. La première image sera l'image principale.
-          </small>
         </div>
 
         <div id="new-images-preview" style="display: none;" class="form-group full-width">
           <label>Nouvelles images</label>
           <div id="new-images-container" class="images-grid"></div>
-          <small style="color: var(--wood-medium); display: block; margin-top: 0.5rem;">
-            💡 <strong>Astuce :</strong> Utilisez les boutons ◀ ▶ pour réorganiser les images. La première image sera l'image principale.
-          </small>
         </div>
 
         <div class="form-group full-width">
@@ -320,6 +346,9 @@
         <div class="form-group full-width">
           <label>Lien vers La p'tite perlouze (optionnel)</label>
           <input type="url" id="product-perlouze-link" placeholder="http://localhost:3000/produit/1">
+          <small style="color: var(--wood-medium); display: block; margin-top: 0.5rem;">
+            💡 <strong>Astuce :</strong> Si cette création en bois a un bijou assorti sur La p'tite perlouze, ajoutez le lien ici pour créer une passerelle entre les deux boutiques
+          </small>
         </div>
 
         <div class="form-actions">
@@ -327,6 +356,26 @@
           <button type="submit" class="btn btn-primary">Enregistrer</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal de confirmation -->
+  <div id="confirm-modal" class="modal" style="z-index: 10001;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <h3 id="confirm-title" style="color: var(--wood-dark); font-size: 1.8rem; margin-bottom: 1rem;">
+        Confirmation
+      </h3>
+      <p id="confirm-message" style="margin-bottom: 2rem; color: var(--slate-gray);">
+        Êtes-vous sûr ?
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button id="confirm-cancel" class="btn btn-secondary">
+          Annuler
+        </button>
+        <button id="confirm-ok" class="btn btn-primary">
+          Confirmer
+        </button>
+      </div>
     </div>
   </div>
 

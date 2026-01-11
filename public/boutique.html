@@ -180,7 +180,7 @@
       <a href="http://localhost:3000">La p'tite perlouze</a>
     </p>
     <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
-      © 2025 Le petit bout de bois - Fait avec passion 🪵
+      © 2026 Le petit bout de bois - Fait avec passion 🪵
     </p>
   </footer>
 
@@ -227,7 +227,7 @@
   </style>
 
   <!-- Scripts -->
-  <script src="/js/cart.js"></script>
+  <script src="/js/main.js"></script>
   <script>
     // Charger les paramètres du site pour le lien perlouze
     async function loadSiteSettings() {
@@ -335,7 +335,18 @@
       document.body.appendChild(modal);
     }
 
+    // Mettre à jour le compteur du panier
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart-bois') || '[]');
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const cartCountElement = document.getElementById('cart-count');
+      if (cartCountElement) {
+        cartCountElement.textContent = `(${totalItems})`;
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      updateCartCount();
       loadSiteSettings();
       loadBoutiqueImages();
 

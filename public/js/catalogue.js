@@ -4,7 +4,9 @@
 
 let allProducts = [];
 let allCategories = [];
+let allWoodTypes = [];
 let currentCategory = 'all';
+let currentWoodType = 'all';
 let currentSearch = '';
 let currentMaxPrice = 100;
 
@@ -19,6 +21,17 @@ async function loadCategories() {
   }
 }
 
+// Charger les types de bois
+async function loadWoodTypes() {
+  try {
+    const response = await fetch('/api/products/meta/wood-types');
+    allWoodTypes = await response.json();
+    renderWoodTypeFilters();
+  } catch (error) {
+    console.error('Erreur chargement types de bois:', error);
+  }
+}
+
 // Générer les boutons de filtres de catégories
 function renderCategoryFilters() {
   const container = document.getElementById('category-filters');
@@ -26,7 +39,7 @@ function renderCategoryFilters() {
 
   // Bouton "Tous"
   let html = `
-    <button class="filter-btn active" data-category="all"
+    <button class="category-filter-btn active" data-category="all"
             style="padding: 0.5rem 1rem; border: 2px solid var(--wood-medium); border-radius: 8px;
                    background: var(--wood-medium); color: white; cursor: pointer; font-weight: 600;
                    transition: all 0.2s ease;">
@@ -37,7 +50,7 @@ function renderCategoryFilters() {
   // Boutons pour chaque catégorie
   allCategories.forEach(category => {
     html += `
-      <button class="filter-btn" data-category="${category}"
+      <button class="category-filter-btn" data-category="${category}"
               style="padding: 0.5rem 1rem; border: 2px solid var(--wood-medium); border-radius: 8px;
                      background: white; color: var(--wood-medium); cursor: pointer; font-weight: 600;
                      transition: all 0.2s ease;">
@@ -49,9 +62,45 @@ function renderCategoryFilters() {
   container.innerHTML = html;
 
   // Réactiver les event listeners
-  setupFilters();
+  setupCategoryFilters();
 
   // Mettre à jour l'état actif selon la catégorie courante
+  updateFilterButtons();
+}
+
+// Générer les boutons de filtres de types de bois
+function renderWoodTypeFilters() {
+  const container = document.getElementById('wood-type-filters');
+  if (!container) return;
+
+  // Bouton "Tous"
+  let html = `
+    <button class="wood-type-filter-btn active" data-wood-type="all"
+            style="padding: 0.5rem 1rem; border: 2px solid var(--wood-medium); border-radius: 8px;
+                   background: var(--wood-medium); color: white; cursor: pointer; font-weight: 600;
+                   transition: all 0.2s ease;">
+      Tous
+    </button>
+  `;
+
+  // Boutons pour chaque type de bois
+  allWoodTypes.forEach(woodType => {
+    html += `
+      <button class="wood-type-filter-btn" data-wood-type="${woodType}"
+              style="padding: 0.5rem 1rem; border: 2px solid var(--wood-medium); border-radius: 8px;
+                     background: white; color: var(--wood-medium); cursor: pointer; font-weight: 600;
+                     transition: all 0.2s ease;">
+        ${woodType}
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Réactiver les event listeners
+  setupWoodTypeFilters();
+
+  // Mettre à jour l'état actif selon le type de bois courant
   updateFilterButtons();
 }
 
@@ -67,10 +116,16 @@ async function loadProducts() {
     // Vérifier les paramètres URL
     const urlParams = new URLSearchParams(window.location.search);
     const categoryParam = urlParams.get('category');
+    const woodTypeParam = urlParams.get('woodType');
     const searchParam = urlParams.get('search');
 
     if (categoryParam) {
       currentCategory = categoryParam;
+      updateFilterButtons();
+    }
+
+    if (woodTypeParam) {
+      currentWoodType = woodTypeParam;
       updateFilterButtons();
     }
 
@@ -143,6 +198,11 @@ function displayProducts() {
   // Filtre par catégorie
   if (currentCategory !== 'all') {
     filteredProducts = filteredProducts.filter(p => p.category === currentCategory);
+  }
+
+  // Filtre par type de bois
+  if (currentWoodType !== 'all') {
+    filteredProducts = filteredProducts.filter(p => p.wood_type === currentWoodType);
   }
 
   // Filtre par recherche
@@ -223,9 +283,9 @@ function truncateText(text, maxLength) {
   return text.substring(0, maxLength) + '...';
 }
 
-// Gestion des filtres
-function setupFilters() {
-  const filterButtons = document.querySelectorAll('.filter-btn');
+// Gestion des filtres de catégories
+function setupCategoryFilters() {
+  const filterButtons = document.querySelectorAll('.category-filter-btn');
 
   filterButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -249,6 +309,41 @@ function setupFilters() {
         url.searchParams.delete('category');
       } else {
         url.searchParams.set('category', currentCategory);
+      }
+      window.history.pushState({}, '', url);
+
+      // Réafficher les produits
+      displayProducts();
+    });
+  });
+}
+
+// Gestion des filtres de types de bois
+function setupWoodTypeFilters() {
+  const filterButtons = document.querySelectorAll('.wood-type-filter-btn');
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Mettre à jour l'état actif
+      filterButtons.forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'white';
+        b.style.color = 'var(--wood-medium)';
+      });
+
+      btn.classList.add('active');
+      btn.style.background = 'var(--wood-medium)';
+      btn.style.color = 'white';
+
+      // Mettre à jour le type de bois
+      currentWoodType = btn.dataset.woodType;
+
+      // Mettre à jour l'URL
+      const url = new URL(window.location);
+      if (currentWoodType === 'all') {
+        url.searchParams.delete('woodType');
+      } else {
+        url.searchParams.set('woodType', currentWoodType);
       }
       window.history.pushState({}, '', url);
 
@@ -287,10 +382,24 @@ function setupSearch() {
 
 // Mettre à jour les boutons de filtre selon l'URL
 function updateFilterButtons() {
-  const filterButtons = document.querySelectorAll('.filter-btn');
-
-  filterButtons.forEach(btn => {
+  // Mettre à jour les filtres de catégories
+  const categoryButtons = document.querySelectorAll('.category-filter-btn');
+  categoryButtons.forEach(btn => {
     if (btn.dataset.category === currentCategory) {
+      btn.classList.add('active');
+      btn.style.background = 'var(--wood-medium)';
+      btn.style.color = 'white';
+    } else {
+      btn.classList.remove('active');
+      btn.style.background = 'white';
+      btn.style.color = 'var(--wood-medium)';
+    }
+  });
+
+  // Mettre à jour les filtres de types de bois
+  const woodTypeButtons = document.querySelectorAll('.wood-type-filter-btn');
+  woodTypeButtons.forEach(btn => {
+    if (btn.dataset.woodType === currentWoodType) {
       btn.classList.add('active');
       btn.style.background = 'var(--wood-medium)';
       btn.style.color = 'white';
@@ -332,6 +441,10 @@ function showError(message) {
 function resetFilters() {
   // Réinitialiser la catégorie
   currentCategory = 'all';
+
+  // Réinitialiser le type de bois
+  currentWoodType = 'all';
+
   updateFilterButtons();
 
   // Réinitialiser la recherche
@@ -354,6 +467,7 @@ function resetFilters() {
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
   loadCategories();
+  loadWoodTypes();
   loadProducts();
   setupSearch();
 

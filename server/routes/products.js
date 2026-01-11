@@ -112,4 +112,16 @@ router.get('/meta/categories', (req, res) => {
   });
 });
 
+// Récupérer les types de bois
+router.get('/meta/wood-types', (req, res) => {
+  db.all('SELECT DISTINCT wood_type FROM products WHERE wood_type IS NOT NULL AND wood_type != "" ORDER BY wood_type', [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    const woodTypes = rows.map(row => row.wood_type);
+    res.json(woodTypes);
+  });
+});
+
 module.exports = router;

@@ -34,6 +34,8 @@ router.post('/', async (req, res) => {
     customerPhone,
     customerAddress,
     items,
+    subtotal,
+    shippingCost,
     totalAmount,
     paymentMethod,
     paymentId
@@ -48,14 +50,16 @@ router.post('/', async (req, res) => {
 
   db.run(`
     INSERT INTO orders (customer_name, customer_email, customer_phone, customer_address,
-                       items, total_amount, payment_method, payment_id, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                       items, subtotal, shipping_cost, total_amount, payment_method, payment_id, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     customerName,
     customerEmail,
     customerPhone || null,
     customerAddress || null,
     itemsJson,
+    subtotal || 0,
+    shippingCost || 0,
     totalAmount,
     paymentMethod || 'card',
     paymentId || null,

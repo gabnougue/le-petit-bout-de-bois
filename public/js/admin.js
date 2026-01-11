@@ -4,9 +4,71 @@
 
 let allProducts = [];
 let allOrders = [];
+let allWoodTypes = [];
 let currentEditingProduct = null;
 let existingImages = []; // Images déjà enregistrées
 let newImageFiles = []; // Nouveaux fichiers sélectionnés
+let imagesToDelete = []; // IDs des images à supprimer (appliqué à la sauvegarde)
+
+// Variable globale pour garder l'ordre mixte des images
+if (typeof window.allImagesOrderBoutDeBois === 'undefined') {
+  window.allImagesOrderBoutDeBois = [];
+}
+
+// ═══════════════════════════════════════════════════
+// Popup de confirmation personnalisée
+// ═══════════════════════════════════════════════════
+
+function showConfirm(messageOrOptions, titleFallback = 'Confirmation') {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirm-modal');
+    const titleElement = document.getElementById('confirm-title');
+    const messageElement = document.getElementById('confirm-message');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    const okBtn = document.getElementById('confirm-ok');
+
+    // Support pour les deux formats: showConfirm(string) ou showConfirm({title, message, icon})
+    let title, message, icon;
+    if (typeof messageOrOptions === 'string') {
+      title = titleFallback;
+      message = messageOrOptions;
+      icon = '';
+    } else {
+      title = messageOrOptions.title || 'Confirmation';
+      message = messageOrOptions.message || '';
+      icon = messageOrOptions.icon || '';
+    }
+
+    titleElement.textContent = (icon ? icon + ' ' : '') + title;
+    messageElement.textContent = message;
+    modal.classList.add('active');
+
+    // Gérer les clics
+    const handleCancel = () => {
+      modal.classList.remove('active');
+      cancelBtn.removeEventListener('click', handleCancel);
+      okBtn.removeEventListener('click', handleOk);
+      resolve(false);
+    };
+
+    const handleOk = () => {
+      modal.classList.remove('active');
+      cancelBtn.removeEventListener('click', handleCancel);
+      okBtn.removeEventListener('click', handleOk);
+      resolve(true);
+    };
+
+    cancelBtn.addEventListener('click', handleCancel);
+    okBtn.addEventListener('click', handleOk);
+
+    // Fermer aussi si on clique en dehors
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        handleCancel();
+      }
+    }, { once: true });
+  });
+}
 
 // Vérifier l'authentification
 async function checkAuth() {
@@ -45,7 +107,7 @@ async function loadStats() {
     const stats = await response.json();
 
     document.getElementById('stat-products').textContent = stats.totalProducts;
-    document.getElementById('stat-orders').textContent = stats.totalOrders;
+    document.getElementById('stat-orders').textContent = stats.ongoingOrders;
     document.getElementById('stat-revenue').textContent = stats.totalRevenue.toFixed(2) + ' €';
     document.getElementById('stat-outofstock').textContent = stats.outOfStock;
   } catch (error) {
@@ -101,6 +163,8 @@ function showAddProductModal() {
   currentEditingProduct = null;
   existingImages = [];
   newImageFiles = [];
+  imagesToDelete = [];
+  window.allImagesOrderBoutDeBois = [];
   document.getElementById('modal-title').textContent = 'Ajouter un produit';
   document.getElementById('product-form').reset();
   document.getElementById('product-id').value = '';
@@ -133,6 +197,8 @@ async function editProduct(productId) {
   }
 
   newImageFiles = [];
+  imagesToDelete = [];
+  window.allImagesOrderBoutDeBois = [];
 
   document.getElementById('modal-title').textContent = 'Modifier le produit';
   document.getElementById('product-id').value = currentEditingProduct.id;
@@ -165,6 +231,8 @@ function closeProductModal() {
   currentEditingProduct = null;
   existingImages = [];
   newImageFiles = [];
+  imagesToDelete = [];
+  window.allImagesOrderBoutDeBois = [];
 
   // Réinitialiser l'input file
   const imageInput = document.getElementById('product-images');
@@ -177,31 +245,9 @@ function closeProductModal() {
   document.getElementById('new-images-preview').style.display = 'none';
 }
 
-// Afficher les images existantes
+// Afficher les images existantes (redirige vers displayNewImages qui affiche tout)
 function displayExistingImages() {
-  const container = document.getElementById('existing-images');
-  const containerDiv = document.getElementById('existing-images-container');
-
-  if (existingImages.length === 0) {
-    containerDiv.style.display = 'none';
-    return;
-  }
-
-  containerDiv.style.display = 'block';
-  container.innerHTML = existingImages.map((img, index) => `
-    <div class="image-item ${img.is_primary ? 'primary' : ''}" data-image-id="${img.id}">
-      <img src="${img.image_path}" alt="Image ${index + 1}">
-      <div class="image-order">${index + 1}</div>
-      <div class="image-controls">
-        <div>
-          ${index > 0 ? `<button type="button" onclick="moveExistingImage(${index}, -1)" title="Déplacer à gauche">←</button>` : ''}
-          ${index < existingImages.length - 1 ? `<button type="button" onclick="moveExistingImage(${index}, 1)" title="Déplacer à droite">→</button>` : ''}
-        </div>
-        <button type="button" onclick="deleteExistingImage(${img.id})" title="Supprimer">🗑️</button>
-      </div>
-      ${img.is_primary ? '<div class="image-primary-badge">Image principale</div>' : ''}
-    </div>
-  `).join('');
+  displayNewImages();
 }
 
 // Déplacer une image existante
@@ -233,112 +279,322 @@ function moveExistingImage(fromIndex, direction) {
   }, 300);
 }
 
-// Supprimer une image existante
-async function deleteExistingImage(imageId) {
-  const confirmed = await showConfirm({
-    title: 'Supprimer l\'image',
-    message: 'Voulez-vous vraiment supprimer cette image ?',
-    icon: '🗑️',
-    confirmText: '🗑️ Supprimer',
-    cancelText: 'Annuler'
-  });
+// Supprimer une image existante (marque pour suppression, appliqué à la sauvegarde)
+function deleteExistingImage(imageId) {
+  // Pas de confirmation ici, juste marquer pour suppression
+  // Ajouter à la liste des images à supprimer
+  if (!imagesToDelete.includes(imageId)) {
+    imagesToDelete.push(imageId);
+  }
 
-  if (!confirmed) return;
-
-  try {
-    const response = await fetch(`/api/admin/product-images/${imageId}`, {
-      method: 'DELETE'
+  // Retirer visuellement de allImagesOrderBoutDeBois
+  if (window.allImagesOrderBoutDeBois && window.allImagesOrderBoutDeBois.length > 0) {
+    window.allImagesOrderBoutDeBois = window.allImagesOrderBoutDeBois.filter(item => 
+      !(item.type === 'existing' && item.data.id === imageId)
+    );
+    
+    // Reconstruire les tableaux à partir de allImagesOrderBoutDeBois mis à jour
+    existingImages = [];
+    newImageFiles = [];
+    
+    window.allImagesOrderBoutDeBois.forEach((item, index) => {
+      if (item.type === 'existing') {
+        item.data.display_order = index + 1;
+        item.data.is_primary = index === 0 ? 1 : 0;
+        existingImages.push(item.data);
+      } else {
+        newImageFiles.push(item.data);
+      }
     });
-
-    if (!response.ok) {
-      throw new Error('Erreur lors de la suppression');
-    }
-
-    // Retirer de la liste locale
+  } else {
+    // Si pas de allImagesOrderBoutDeBois, retirer de existingImages
     existingImages = existingImages.filter(img => img.id !== imageId);
-
-    // Réorganiser
     existingImages.forEach((img, idx) => {
-      img.display_order = idx;
+      img.display_order = idx + 1;
       img.is_primary = idx === 0 ? 1 : 0;
     });
-
-    displayExistingImages();
-    showSuccess('Image supprimée avec succès');
-
-  } catch (error) {
-    console.error('Erreur:', error);
-    showError('Erreur lors de la suppression de l\'image');
   }
+
+  displayNewImages();
 }
 
-// Afficher l'aperçu des nouvelles images
+// Afficher toutes les images (existantes + nouvelles) de manière intégrée
 function displayNewImages() {
-  const container = document.getElementById('new-images-container');
-  const containerDiv = document.getElementById('new-images-preview');
+  const existingContainer = document.getElementById('existing-images');
+  const existingContainerDiv = document.getElementById('existing-images-container');
+  const newContainerDiv = document.getElementById('new-images-preview');
 
-  if (newImageFiles.length === 0) {
-    containerDiv.style.display = 'none';
+  // Utiliser allImagesOrderBoutDeBois s'il existe, sinon créer le tableau
+  let allImages = [];
+
+  if (window.allImagesOrderBoutDeBois && window.allImagesOrderBoutDeBois.length > 0) {
+    // Utiliser l'ordre global sauvegardé
+    allImages = window.allImagesOrderBoutDeBois.map((item, index) => ({
+      type: item.type,
+      data: item.data,
+      originalIndex: index
+    }));
+  } else {
+    // Créer un nouveau tableau mixte et l'enregistrer
+    existingImages.forEach((image, index) => {
+      allImages.push({
+        type: 'existing',
+        data: image,
+        originalIndex: index
+      });
+    });
+
+    newImageFiles.forEach((file, index) => {
+      allImages.push({
+        type: 'new',
+        data: file,
+        originalIndex: index
+      });
+    });
+
+    // Sauvegarder dans allImagesOrderBoutDeBois
+    window.allImagesOrderBoutDeBois = allImages;
+  }
+
+  const totalImages = allImages.length;
+
+  if (totalImages === 0) {
+    existingContainerDiv.style.display = 'none';
+    newContainerDiv.style.display = 'none';
     return;
   }
 
-  containerDiv.style.display = 'block';
-  container.innerHTML = '';
+  // Afficher tout dans le conteneur des images existantes
+  existingContainerDiv.style.display = 'block';
+  newContainerDiv.style.display = 'none';
+  existingContainer.innerHTML = '';
 
-  // Créer les divs dans le bon ordre avec des placeholders
-  newImageFiles.forEach((file, index) => {
-    const div = document.createElement('div');
-    div.className = `image-item ${index === 0 && existingImages.length === 0 ? 'primary' : ''}`;
-    div.id = `new-image-${index}`;
-    div.innerHTML = `
-      <img src="" alt="${file.name}" style="opacity: 0.5;">
-      <div class="image-order">${existingImages.length + index + 1}</div>
-      <div class="image-controls">
-        <div>
-          ${index > 0 ? `<button type="button" onclick="moveNewImage(${index}, -1)" title="Déplacer à gauche">←</button>` : ''}
-          ${index < newImageFiles.length - 1 ? `<button type="button" onclick="moveNewImage(${index}, 1)" title="Déplacer à droite">→</button>` : ''}
-        </div>
-        <button type="button" onclick="removeNewImage(${index})" title="Supprimer">🗑️</button>
-      </div>
-      ${index === 0 && existingImages.length === 0 ? '<div class="image-primary-badge">Image principale</div>' : ''}
-    `;
-    container.appendChild(div);
+  // Afficher toutes les images de manière intégrée (même style que la-ptite-perlouze)
+  allImages.forEach((item, globalIndex) => {
+    const imageDiv = document.createElement('div');
+    imageDiv.className = 'image-item';
+    imageDiv.style.position = 'relative';
+    imageDiv.style.display = 'inline-block';
+    imageDiv.style.width = '120px';
+    imageDiv.style.height = '120px';
+    imageDiv.style.marginRight = '0.35rem';
+    imageDiv.style.marginBottom = '0.35rem';
+    imageDiv.style.overflow = 'hidden';
+    imageDiv.style.borderRadius = '10px';
 
-    // Charger l'image de manière asynchrone et l'insérer dans le bon div
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const targetDiv = document.getElementById(`new-image-${index}`);
-      if (targetDiv) {
-        const img = targetDiv.querySelector('img');
+    const img = document.createElement('img');
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.display = 'block';
+
+    // Badge de position
+    const badge = document.createElement('span');
+    badge.style.position = 'absolute';
+    badge.style.top = '5px';
+    badge.style.left = '5px';
+    badge.style.color = 'white';
+    badge.style.padding = '3px 8px';
+    badge.style.borderRadius = '5px';
+    badge.style.fontSize = '0.75rem';
+    badge.style.fontWeight = 'bold';
+    badge.style.zIndex = '2';
+
+    // Bouton de suppression
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = '✕';
+    deleteBtn.type = 'button';
+    deleteBtn.style.position = 'absolute';
+    deleteBtn.style.top = '5px';
+    deleteBtn.style.right = '5px';
+    deleteBtn.style.background = '#C17B7B';
+    deleteBtn.style.color = 'white';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.borderRadius = '50%';
+    deleteBtn.style.width = '24px';
+    deleteBtn.style.height = '24px';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontSize = '14px';
+    deleteBtn.style.fontWeight = 'bold';
+    deleteBtn.style.display = 'flex';
+    deleteBtn.style.alignItems = 'center';
+    deleteBtn.style.justifyContent = 'center';
+    deleteBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+    deleteBtn.style.zIndex = '2';
+
+    // Boutons de réorganisation
+    const controlsDiv = document.createElement('div');
+    controlsDiv.style.position = 'absolute';
+    controlsDiv.style.bottom = '5px';
+    controlsDiv.style.left = '50%';
+    controlsDiv.style.transform = 'translateX(-50%)';
+    controlsDiv.style.display = 'flex';
+    controlsDiv.style.gap = '5px';
+    controlsDiv.style.zIndex = '2';
+
+    let moveUpBtn = null;
+    let moveDownBtn = null;
+
+    if (globalIndex > 0) {
+      moveUpBtn = document.createElement('button');
+      moveUpBtn.innerHTML = '◀';
+      moveUpBtn.type = 'button';
+      moveUpBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+      moveUpBtn.style.border = 'none';
+      moveUpBtn.style.borderRadius = '50%';
+      moveUpBtn.style.width = '24px';
+      moveUpBtn.style.height = '24px';
+      moveUpBtn.style.cursor = 'pointer';
+      moveUpBtn.style.fontSize = '12px';
+      moveUpBtn.style.fontWeight = 'bold';
+      moveUpBtn.style.display = 'flex';
+      moveUpBtn.style.alignItems = 'center';
+      moveUpBtn.style.justifyContent = 'center';
+      moveUpBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)';
+      moveUpBtn.onclick = () => moveImageGlobally(globalIndex, globalIndex - 1);
+      controlsDiv.appendChild(moveUpBtn);
+    }
+
+    if (globalIndex < totalImages - 1) {
+      moveDownBtn = document.createElement('button');
+      moveDownBtn.innerHTML = '▶';
+      moveDownBtn.type = 'button';
+      moveDownBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+      moveDownBtn.style.border = 'none';
+      moveDownBtn.style.borderRadius = '50%';
+      moveDownBtn.style.width = '24px';
+      moveDownBtn.style.height = '24px';
+      moveDownBtn.style.cursor = 'pointer';
+      moveDownBtn.style.fontSize = '12px';
+      moveDownBtn.style.fontWeight = 'bold';
+      moveDownBtn.style.display = 'flex';
+      moveDownBtn.style.alignItems = 'center';
+      moveDownBtn.style.justifyContent = 'center';
+      moveDownBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.15)';
+      moveDownBtn.onclick = () => moveImageGlobally(globalIndex, globalIndex + 1);
+      controlsDiv.appendChild(moveDownBtn);
+    }
+
+    if (item.type === 'existing') {
+      // Image existante
+      const image = item.data;
+      img.src = image.image_path;
+      img.alt = `Image ${globalIndex + 1}`;
+      
+      // Bordure sur le conteneur
+      imageDiv.style.border = globalIndex === 0 ? '3px solid var(--accent-orange)' : '2px solid var(--wood-light)';
+
+      badge.textContent = globalIndex === 0 ? '★ Principale' : `${globalIndex + 1}`;
+      badge.style.background = globalIndex === 0 ? 'var(--accent-orange)' : 'var(--wood-medium)';
+
+      moveUpBtn && (moveUpBtn.style.color = 'var(--wood-dark)');
+      moveDownBtn && (moveDownBtn.style.color = 'var(--wood-dark)');
+
+      deleteBtn.onclick = () => deleteExistingImage(image.id);
+    } else {
+      // Nouvelle image
+      const file = item.data;
+      img.alt = `Nouvelle image ${globalIndex + 1}`;
+      
+      // Bordure sur le conteneur
+      imageDiv.style.border = globalIndex === 0 ? '3px solid var(--accent-orange)' : '3px solid var(--wood-medium)';
+      img.style.opacity = '0.95';
+
+      badge.textContent = globalIndex === 0 ? '★ Nouvelle' : `✨ ${globalIndex + 1}`;
+      badge.style.background = 'var(--wood-medium)';
+
+      moveUpBtn && (moveUpBtn.style.color = 'var(--wood-medium)');
+      moveDownBtn && (moveDownBtn.style.color = 'var(--wood-medium)');
+
+      deleteBtn.onclick = () => removeNewImageGlobally(globalIndex);
+
+      // Lire le fichier et afficher l'image
+      const reader = new FileReader();
+      reader.onload = function(e) {
         img.src = e.target.result;
-        img.style.opacity = '1';
-      }
-    };
-    reader.readAsDataURL(file);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    imageDiv.appendChild(img);
+    imageDiv.appendChild(badge);
+    imageDiv.appendChild(deleteBtn);
+    imageDiv.appendChild(controlsDiv);
+    existingContainer.appendChild(imageDiv);
   });
+
+  // Message informatif
+  if (totalImages > 0) {
+    const infoDiv = document.createElement('div');
+    infoDiv.style.gridColumn = '1 / -1';
+    infoDiv.style.padding = '0.5rem';
+    infoDiv.style.background = 'var(--cream)';
+    infoDiv.style.borderRadius = '8px';
+    infoDiv.style.fontSize = '0.9rem';
+    infoDiv.style.color = 'var(--wood-dark)';
+    infoDiv.style.marginTop = '0.5rem';
+    infoDiv.innerHTML = `
+      <strong>💡 Astuce :</strong> Utilisez les boutons ◀ ▶ pour réorganiser toutes les images ensemble. Les images avec ✨ seront ajoutées lors de la sauvegarde.
+    `;
+    existingContainer.appendChild(infoDiv);
+  }
 }
 
-// Déplacer une nouvelle image
-function moveNewImage(fromIndex, direction) {
-  const toIndex = fromIndex + direction;
-  if (toIndex < 0 || toIndex >= newImageFiles.length) return;
+// Déplacer une image dans l'ordre global (existantes + nouvelles mélangées)
+function moveImageGlobally(fromIndex, toIndex) {
+  // Si allImagesOrderBoutDeBois est vide, le créer
+  if (!window.allImagesOrderBoutDeBois || window.allImagesOrderBoutDeBois.length === 0) {
+    window.allImagesOrderBoutDeBois = [];
+    existingImages.forEach(img => window.allImagesOrderBoutDeBois.push({ type: 'existing', data: img }));
+    newImageFiles.forEach(file => window.allImagesOrderBoutDeBois.push({ type: 'new', data: file }));
+  }
 
-  // Ajouter classe d'animation
-  const container = document.getElementById('new-images-container');
-  container.classList.add('reordering');
+  // Échanger les positions dans le tableau global
+  const temp = window.allImagesOrderBoutDeBois[fromIndex];
+  window.allImagesOrderBoutDeBois[fromIndex] = window.allImagesOrderBoutDeBois[toIndex];
+  window.allImagesOrderBoutDeBois[toIndex] = temp;
 
-  [newImageFiles[fromIndex], newImageFiles[toIndex]] = [newImageFiles[toIndex], newImageFiles[fromIndex]];
+  // Reconstruire les tableaux séparés à partir de allImagesOrderBoutDeBois
+  existingImages = [];
+  newImageFiles = [];
+
+  window.allImagesOrderBoutDeBois.forEach((item, index) => {
+    if (item.type === 'existing') {
+      // Mettre à jour display_order et is_primary
+      item.data.display_order = index + 1;
+      item.data.is_primary = index === 0 ? 1 : 0;
+      existingImages.push(item.data);
+    } else {
+      newImageFiles.push(item.data);
+    }
+  });
+
+  // Ne plus sauvegarder immédiatement, l'ordre sera appliqué à la sauvegarde du formulaire
+
   displayNewImages();
-
-  // Retirer classe d'animation après l'animation
-  setTimeout(() => {
-    container.classList.remove('reordering');
-  }, 300);
 }
 
-// Retirer une nouvelle image
-function removeNewImage(index) {
-  newImageFiles.splice(index, 1);
+// Supprimer une nouvelle image de la liste (globalIndex = position dans l'affichage complet)
+function removeNewImageGlobally(globalIndex) {
+  // Supprimer de allImagesOrderBoutDeBois
+  if (window.allImagesOrderBoutDeBois && window.allImagesOrderBoutDeBois.length > globalIndex) {
+    window.allImagesOrderBoutDeBois.splice(globalIndex, 1);
+  }
+
+  // Reconstruire les tableaux séparés à partir de allImagesOrderBoutDeBois
+  existingImages = [];
+  newImageFiles = [];
+
+  window.allImagesOrderBoutDeBois.forEach((item, index) => {
+    if (item.type === 'existing') {
+      item.data.display_order = index + 1;
+      item.data.is_primary = index === 0 ? 1 : 0;
+      existingImages.push(item.data);
+    } else {
+      newImageFiles.push(item.data);
+    }
+  });
+
   displayNewImages();
 }
 
@@ -356,6 +612,13 @@ async function saveProduct(event) {
   formData.append('stock', document.getElementById('product-stock').value);
   formData.append('description', document.getElementById('product-description').value);
   formData.append('perlouze_link', document.getElementById('product-perlouze-link').value);
+
+  // Vérifier le nombre total d'images
+  const totalImages = existingImages.length + newImageFiles.length;
+  if (totalImages > 10) {
+    showError(`Vous ne pouvez avoir que 10 images maximum (actuellement ${existingImages.length} existantes + ${newImageFiles.length} nouvelles)`);
+    return;
+  }
 
   // Ajouter les nouvelles images
   newImageFiles.forEach((file) => {
@@ -377,9 +640,82 @@ async function saveProduct(event) {
 
     const result = await response.json();
 
-    // Si c'est une modification et qu'il y a des images existantes réorganisées, les enregistrer
-    if (productId && existingImages.length > 0) {
-      await saveImageOrder(productId);
+    // Traiter d'abord les suppressions d'images
+    if (productId && imagesToDelete.length > 0) {
+      for (const imageId of imagesToDelete) {
+        try {
+          await fetch(`/api/admin/product-images/${imageId}`, {
+            method: 'DELETE'
+          });
+        } catch (error) {
+          console.error(`Erreur suppression image ${imageId}:`, error);
+        }
+      }
+    }
+
+    // Si on a uploadé de nouvelles images et qu'on a un ordre global mixte
+    if (newImageFiles.length > 0 && window.allImagesOrderBoutDeBois && window.allImagesOrderBoutDeBois.length > 0) {
+      const finalProductId = result.id || productId;
+
+      if (finalProductId) {
+        // Attendre un peu que les images soient bien enregistrées
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Recharger le produit pour obtenir les IDs des nouvelles images
+        const productResponse = await fetch(`/api/products/${finalProductId}`);
+        const productData = await productResponse.json();
+
+        if (productData && productData.images) {
+          const allUploadedImages = productData.images;
+
+          // Reconstruire l'ordre selon allImagesOrderBoutDeBois
+          const finalOrder = [];
+          let newImageIndex = 0;
+
+          window.allImagesOrderBoutDeBois.forEach((item, globalIndex) => {
+            if (item.type === 'existing') {
+              // Trouver l'image existante par son ID
+              const existingImg = allUploadedImages.find(img => img.id === item.data.id);
+              if (existingImg) {
+                finalOrder.push({
+                  id: existingImg.id,
+                  display_order: globalIndex + 1,
+                  is_primary: globalIndex === 0 ? 1 : 0
+                });
+              }
+            } else {
+              // Pour les nouvelles images, on prend les dernières images uploadées
+              const newImages = allUploadedImages.filter(img =>
+                !existingImages.find(existing => existing.id === img.id)
+              );
+
+              if (newImages[newImageIndex]) {
+                finalOrder.push({
+                  id: newImages[newImageIndex].id,
+                  display_order: globalIndex + 1,
+                  is_primary: globalIndex === 0 ? 1 : 0
+                });
+                newImageIndex++;
+              }
+            }
+          });
+
+          // Envoyer la réorganisation finale
+          if (finalOrder.length > 0) {
+            await fetch(`/api/admin/products/${finalProductId}/reorder-images`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ images: finalOrder })
+            });
+          }
+        }
+      }
+    } else if (productId) {
+      // Si c'est une modification sans nouvelles images, sauvegarder l'ordre des existantes
+      // et traiter les suppressions (déjà fait plus haut)
+      if (existingImages.length > 0) {
+        await saveImageOrder(productId);
+      }
     }
 
     showSuccess('Produit enregistré avec succès');
@@ -722,7 +1058,7 @@ async function loadDetailedStats() {
     const stats = await response.json();
 
     document.getElementById('stat-detail-products').textContent = stats.totalProducts;
-    document.getElementById('stat-detail-orders').textContent = stats.totalOrders;
+    document.getElementById('stat-detail-orders').textContent = stats.ongoingOrders;
     document.getElementById('stat-detail-revenue').textContent = stats.totalRevenue.toFixed(2) + ' €';
     document.getElementById('stat-detail-outofstock').textContent = stats.outOfStock;
   } catch (error) {
@@ -731,26 +1067,83 @@ async function loadDetailedStats() {
 }
 
 // ====================================
-// GESTION DES MESSAGES/CONTACTS
+// GESTION DES CONVERSATIONS (THREADS)
 // ====================================
 
-let allContacts = [];
+let allThreads = [];
 
-// Charger les contacts
-async function loadContacts() {
+// Charger les threads de conversation
+async function loadThreads() {
   try {
-    const response = await fetch('/api/contact/admin');
-    allContacts = await response.json();
-    displayContacts();
+    const response = await fetch('/api/messages/threads');
+    allThreads = await response.json();
     updateMessagesBadge();
+
+    const tbody = document.querySelector('#threads-table-body');
+    tbody.innerHTML = '';
+
+    // Filtrer les threads si la checkbox est cochée
+    const hideClosed = document.getElementById('hide-closed-threads')?.checked;
+    const filteredThreads = hideClosed ? allThreads.filter(t => t.status !== 'closed') : allThreads;
+
+    if (filteredThreads.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">💬</div>
+            <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">Aucune conversation</p>
+            <p style="font-size: 0.9rem;">Les conversations avec les clients apparaîtront ici</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    filteredThreads.forEach(thread => {
+      const row = document.createElement('tr');
+      const date = new Date(thread.last_message_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const unreadCount = thread.unread_count || 0;
+
+      row.innerHTML = `
+        <td data-label="Statut">
+          <div>
+            ${thread.status === 'open'
+              ? '<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; background: #10B981; color: white;">Ouvert</span>'
+              : '<span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; background: #6B7280; color: white;">Fermé</span>'
+            }
+          </div>
+          ${unreadCount > 0 ? `<div style="margin-top: 0.5rem;"><span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; background: #F59E0B; color: white;">${unreadCount} nouveau(x)</span></div>` : ''}
+        </td>
+        <td data-label="Client">
+          <div><strong>${thread.customer_name}</strong></div>
+          <small style="color: var(--slate-gray);">${thread.customer_email}</small>
+        </td>
+        <td data-label="Dernier message" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <span style="font-weight: ${thread.last_sender === 'customer' ? 'bold' : 'normal'};">
+            ${thread.last_message || '-'}
+          </span>
+        </td>
+        <td data-label="Date">${date}</td>
+        <td data-label="Actions">
+          <button onclick="viewThread(${thread.id})" class="btn-icon btn-edit" title="Voir la conversation">👁️</button>
+          ${thread.status === 'open'
+            ? `<button onclick="closeThread(${thread.id})" class="btn-icon btn-close" title="Fermer">✓</button>`
+            : `<button onclick="reopenThread(${thread.id})" class="btn-icon btn-close" title="Rouvrir">↻</button>`
+          }
+          <button onclick="deleteThread(${thread.id})" class="btn-icon btn-delete" title="Supprimer">🗑️</button>
+        </td>
+      `;
+
+      tbody.appendChild(row);
+    });
   } catch (error) {
-    console.error('Erreur chargement contacts:', error);
+    console.error('Erreur:', error);
   }
 }
 
 // Mettre à jour la bulle de notification des messages
 function updateMessagesBadge() {
-  const unreadCount = allContacts.filter(c => c.status === 'nouveau').length;
+  const unreadCount = allThreads.reduce((sum, thread) => sum + (thread.unread_count || 0), 0);
   const badge = document.getElementById('messages-badge');
 
   if (badge) {
@@ -763,116 +1156,232 @@ function updateMessagesBadge() {
   }
 }
 
-// Afficher les contacts
-function displayContacts() {
-  const tbody = document.getElementById('contacts-table-body');
-
-  if (allContacts.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">Aucun message</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = allContacts.map(contact => {
-    const statusColors = {
-      'nouveau': '#F59E0B',
-      'lu': '#3B82F6',
-      'traite': '#10B981'
-    };
-
-    const statusLabels = {
-      'nouveau': 'Nouveau',
-      'lu': 'Lu',
-      'traite': 'Traité'
-    };
-
-    return `
-      <tr style="${contact.status === 'nouveau' ? 'background: rgba(245, 158, 11, 0.1);' : ''}">
-        <td data-label="Date">${new Date(contact.created_at).toLocaleDateString('fr-FR')}</td>
-        <td data-label="Nom">${contact.name}</td>
-        <td data-label="Email">${contact.email}</td>
-        <td data-label="Message" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${contact.message}</td>
-        <td data-label="Statut">
-          <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; background: ${statusColors[contact.status]}; color: white;">
-            ${statusLabels[contact.status]}
-          </span>
-        </td>
-        <td data-label="Actions">
-          ${contact.status === 'nouveau' ? `<button onclick="markContactAsRead(${contact.id})" class="btn-icon" title="Marquer comme lu">✓</button>` : ''}
-          <button onclick="viewContact(${contact.id})" class="btn-icon btn-edit" title="Voir">👁️</button>
-          <button onclick="deleteContact(${contact.id})" class="btn-icon btn-delete" title="Supprimer">🗑️</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-// Marquer un contact comme lu
-async function markContactAsRead(contactId) {
+// Voir une conversation complète
+async function viewThread(threadId) {
   try {
-    const response = await fetch(`/api/contact/admin/${contactId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'lu' })
+    // Marquer comme lu
+    await fetch(`/api/messages/threads/${threadId}/mark-read`, {
+      method: 'POST'
     });
 
-    const data = await response.json();
+    // Recharger les threads pour mettre à jour le badge
+    loadThreads();
 
-    if (data.success) {
-      showSuccess('Message marqué comme lu');
-      loadContacts();
-    } else {
-      showError('Erreur: ' + data.error);
-    }
+    const response = await fetch(`/api/messages/threads/${threadId}/messages`);
+    const messages = await response.json();
+    const thread = allThreads.find(t => t.id === threadId);
+
+    if (!thread) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.style.zIndex = '10001';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+          <div>
+            <h3 style="margin: 0; color: var(--wood-dark); font-size: 1.8rem;">
+              ${thread.subject}
+            </h3>
+            <p style="margin: 0.5rem 0 0 0; color: var(--slate-gray); font-size: 0.9rem;">
+              <strong>${thread.customer_name}</strong> (${thread.customer_email})
+            </p>
+          </div>
+          <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--slate-gray);">×</button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; background: var(--cream); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; max-height: 50vh;">
+          ${messages.map(msg => {
+            const isCustomer = msg.sender_type === 'customer';
+            return `
+              <div style="margin-bottom: 1.5rem; display: flex; justify-content: ${isCustomer ? 'flex-start' : 'flex-end'};">
+                <div style="max-width: 70%; background: ${isCustomer ? 'white' : 'var(--wood-dark)'}; color: ${isCustomer ? 'var(--slate-gray)' : 'white'}; padding: 1rem; border-radius: 15px; box-shadow: var(--shadow-light);">
+                  <div style="margin-bottom: 0.5rem;">
+                    <strong>${msg.sender_name}</strong>
+                    <span style="font-size: 0.85rem; opacity: 0.8; margin-left: 0.5rem;">
+                      ${new Date(msg.created_at).toLocaleString('fr-FR')}
+                    </span>
+                  </div>
+                  <div style="white-space: pre-wrap; line-height: 1.5;">${msg.message}</div>
+                  ${msg.has_attachments && msg.attachments ? `
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid ${isCustomer ? '#eee' : 'rgba(255,255,255,0.3)'};">
+                      <strong style="font-size: 0.9rem;">📎 Pièces jointes:</strong>
+                      ${msg.attachments.map(att => `
+                        <div style="margin-top: 0.5rem;">
+                          <a href="/attachments/${att.file_path}" target="_blank" style="color: ${isCustomer ? 'var(--wood-dark)' : 'white'}; text-decoration: underline;">
+                            ${att.filename}
+                          </a>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div>
+          <button onclick="replyToThread(${threadId})" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+            💬 Répondre
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
   } catch (error) {
     console.error('Erreur:', error);
-    showError('Erreur lors de la mise à jour');
+    showError('Erreur lors du chargement de la conversation');
   }
 }
 
-// Voir un contact
-function viewContact(contactId) {
-  const contact = allContacts.find(c => c.id === contactId);
-  if (!contact) return;
+// Répondre à un thread
+function replyToThread(threadId) {
+  const thread = allThreads.find(t => t.id === threadId);
+  if (!thread) return;
 
   const modal = document.createElement('div');
   modal.className = 'modal active';
+  modal.style.zIndex = '10002';
   modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Message de ${contact.name}</h3>
-        <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+    <div class="modal-content" style="max-width: 700px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0; color: var(--wood-dark); font-size: 1.8rem;">
+          Répondre à ${thread.customer_name}
+        </h3>
+        <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--slate-gray);">×</button>
       </div>
 
-      <div style="margin-bottom: 1.5rem;">
-        <p style="margin: 0.5rem 0;"><strong>Email:</strong> ${contact.email}</p>
-        <p style="margin: 0.5rem 0;"><strong>Date:</strong> ${new Date(contact.created_at).toLocaleString('fr-FR')}</p>
-        <p style="margin: 0.5rem 0;"><strong>Statut:</strong> ${contact.status}</p>
-      </div>
+      <form id="reply-form" onsubmit="sendReply(event, ${threadId})">
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">
+            Votre message
+          </label>
+          <textarea id="reply-message" required rows="8"
+            style="width: 100%; padding: 1rem; border: 2px solid var(--wood-light); border-radius: 12px; resize: vertical;"
+            placeholder="Écrivez votre réponse..."></textarea>
+        </div>
 
-      <div style="background: var(--cream); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <h4 style="margin: 0 0 1rem 0; color: var(--wood-dark);">Message:</h4>
-        <p style="white-space: pre-wrap; margin: 0; line-height: 1.6;">${contact.message}</p>
-      </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--wood-dark); font-weight: 600;">
+            Pièces jointes (optionnel)
+          </label>
+          <input type="file" id="reply-attachments" multiple accept="image/*,.pdf"
+            style="width: 100%; padding: 0.75rem; border: 2px solid var(--wood-light); border-radius: 12px;">
+          <small style="display: block; margin-top: 0.5rem; color: var(--slate-gray);">
+            Jusqu'à 5 fichiers (images ou PDF, 10 Mo maximum par fichier)
+          </small>
+        </div>
 
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        ${contact.status === 'nouveau' ? `
-          <button onclick="markContactAsRead(${contact.id}); this.closest('.modal').remove();" class="btn btn-primary">
-            Marquer comme lu
+        <div style="display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            Envoyer la réponse
           </button>
-        ` : ''}
-        <button onclick="this.closest('.modal').remove();" class="btn btn-secondary">Fermer</button>
-      </div>
+          <button type="button" onclick="this.closest('.modal').remove()" class="btn btn-secondary" style="flex: 1;">
+            Annuler
+          </button>
+        </div>
+      </form>
     </div>
   `;
 
   document.body.appendChild(modal);
 }
 
-// Supprimer un contact
-async function deleteContact(contactId) {
+// Envoyer une réponse
+async function sendReply(event, threadId) {
+  event.preventDefault();
+
+  const messageInput = document.getElementById('reply-message');
+  const attachmentsInput = document.getElementById('reply-attachments');
+  const message = messageInput.value.trim();
+
+  if (!message) {
+    showError('Le message est requis');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('message', message);
+
+  // Ajouter les pièces jointes
+  if (attachmentsInput.files.length > 0) {
+    for (let i = 0; i < Math.min(attachmentsInput.files.length, 5); i++) {
+      formData.append('attachments', attachmentsInput.files[i]);
+    }
+  }
+
+  try {
+    const response = await fetch(`/api/messages/threads/${threadId}/reply`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      showSuccess('Réponse envoyée avec succès');
+      // Fermer tous les modals
+      document.querySelectorAll('.modal').forEach(m => m.remove());
+      // Recharger les threads
+      loadThreads();
+    } else {
+      showError(result.error || 'Erreur lors de l\'envoi');
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('Erreur lors de l\'envoi de la réponse');
+  }
+}
+
+// Fermer un thread
+async function closeThread(threadId) {
+  try {
+    const response = await fetch(`/api/messages/threads/${threadId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'closed' })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      showSuccess('Conversation fermée');
+      loadThreads();
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('Erreur lors de la fermeture');
+  }
+}
+
+// Rouvrir un thread
+async function reopenThread(threadId) {
+  try {
+    const response = await fetch(`/api/messages/threads/${threadId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'open' })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      showSuccess('Conversation rouverte');
+      loadThreads();
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('Erreur lors de la réouverture');
+  }
+}
+
+// Supprimer un thread
+async function deleteThread(threadId) {
   const confirmed = await showConfirm({
-    title: 'Supprimer ce message ?',
-    message: 'Cette action est irréversible.',
+    title: 'Supprimer cette conversation ?',
+    message: 'Cette action est irréversible. Tous les messages et pièces jointes seront définitivement supprimés.',
     icon: '🗑️',
     confirmText: '🗑️ Supprimer',
     cancelText: 'Annuler'
@@ -881,17 +1390,17 @@ async function deleteContact(contactId) {
   if (!confirmed) return;
 
   try {
-    const response = await fetch(`/api/contact/admin/${contactId}`, {
+    const response = await fetch(`/api/messages/threads/${threadId}`, {
       method: 'DELETE'
     });
 
-    const data = await response.json();
+    const result = await response.json();
 
-    if (data.success) {
-      showSuccess('Message supprimé');
-      loadContacts();
+    if (result.success) {
+      showSuccess('Conversation supprimée avec succès');
+      loadThreads();
     } else {
-      showError('Erreur: ' + data.error);
+      showError('Erreur lors de la suppression');
     }
   } catch (error) {
     console.error('Erreur:', error);
@@ -927,14 +1436,26 @@ function displayCategories() {
   }
 
   container.innerHTML = allCategories.map(cat => `
-    <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
-                background: white; border: 2px solid var(--wood-light); border-radius: 20px;
-                font-weight: 500; color: var(--wood-dark);">
-      <span>${cat.name}</span>
+    <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem;
+                background: white; border: 2px solid var(--wood-light); border-radius: 12px;">
+      <div style="font-size: 2rem;">${cat.emoji || '🪵'}</div>
+      <div style="flex: 1;">
+        <div style="font-weight: 600; color: var(--wood-dark);">${cat.name}</div>
+        <div style="font-size: 0.9rem; color: var(--slate-gray);">${cat.description || ''}</div>
+      </div>
+      <button onclick="editCategory(${cat.id}, '${cat.name.replace(/'/g, "\\'")}', '${(cat.emoji || '🪵').replace(/'/g, "\\'")}', '${(cat.description || '').replace(/'/g, "\\'")}')"
+              class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+        Modifier
+      </button>
       <button onclick="deleteCategory(${cat.id})"
-              style="background: none; border: none; color: #DC2626; cursor: pointer; font-size: 1.2rem;
-                     padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;"
-              title="Supprimer">×</button>
+              style="background: #C17B7B; color: white; border: none; padding: 0.5rem; border-radius: 8px;
+                     cursor: pointer; font-weight: 600; font-size: 1.2rem; transition: all 0.2s ease;
+                     width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;"
+              onmouseover="this.style.background='#A86565'; this.style.transform='scale(1.1) rotate(90deg)'; this.style.boxShadow='0 4px 10px rgba(193, 123, 123, 0.3)'"
+              onmouseout="this.style.background='#C17B7B'; this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='none'"
+              title="Supprimer">
+        ✕
+      </button>
     </div>
   `).join('');
 }
@@ -951,8 +1472,13 @@ function updateCategorySelect() {
 
 // Ajouter une catégorie
 async function addCategory() {
-  const input = document.getElementById('new-category-input');
-  const name = input.value.trim();
+  const nameInput = document.getElementById('new-category-input');
+  const emojiInput = document.getElementById('new-category-emoji');
+  const descriptionInput = document.getElementById('new-category-description');
+
+  const name = nameInput.value.trim();
+  const emoji = emojiInput.value.trim() || '🪵';
+  const description = descriptionInput.value.trim();
 
   if (!name) {
     showError('Veuillez entrer un nom de catégorie');
@@ -963,14 +1489,16 @@ async function addCategory() {
     const response = await fetch('/api/settings/categories', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name, emoji, description })
     });
 
     const data = await response.json();
 
     if (data.success) {
       showSuccess('Catégorie ajoutée');
-      input.value = '';
+      nameInput.value = '';
+      emojiInput.value = '';
+      descriptionInput.value = '';
       loadCategories();
     } else {
       showError('Erreur: ' + data.error);
@@ -979,6 +1507,88 @@ async function addCategory() {
     console.error('Erreur:', error);
     showError('Erreur lors de l\'ajout');
   }
+}
+
+// Annuler la modification d'une catégorie
+function cancelEditCategory() {
+  const nameInput = document.getElementById('new-category-input');
+  const emojiInput = document.getElementById('new-category-emoji');
+  const descriptionInput = document.getElementById('new-category-description');
+  const submitButton = document.getElementById('category-submit-btn');
+  const cancelButton = document.getElementById('category-cancel-btn');
+
+  // Réinitialiser les champs
+  nameInput.value = '';
+  emojiInput.value = '';
+  descriptionInput.value = '';
+
+  // Remettre le bouton en mode "Ajouter"
+  submitButton.textContent = 'Ajouter la catégorie';
+  submitButton.onclick = addCategory;
+
+  // Cacher le bouton annuler
+  cancelButton.style.display = 'none';
+}
+
+// Modifier une catégorie
+async function editCategory(id, currentName, currentEmoji, currentDescription) {
+  const nameInput = document.getElementById('new-category-input');
+  const emojiInput = document.getElementById('new-category-emoji');
+  const descriptionInput = document.getElementById('new-category-description');
+  const submitButton = document.getElementById('category-submit-btn');
+  const cancelButton = document.getElementById('category-cancel-btn');
+
+  // Pré-remplir les champs
+  nameInput.value = currentName;
+  emojiInput.value = currentEmoji;
+  descriptionInput.value = currentDescription;
+
+  // Afficher le bouton annuler
+  cancelButton.style.display = 'block';
+
+  // Changer le bouton en mode "Mettre à jour"
+  submitButton.textContent = 'Mettre à jour';
+  submitButton.onclick = async () => {
+    const name = nameInput.value.trim();
+    const emoji = emojiInput.value.trim() || '🪵';
+    const description = descriptionInput.value.trim();
+
+    if (!name) {
+      showError('Veuillez entrer un nom de catégorie');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/settings/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, emoji, description })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccess('Catégorie modifiée');
+        nameInput.value = '';
+        emojiInput.value = '';
+        descriptionInput.value = '';
+        loadCategories();
+        // Remettre le bouton en mode "Ajouter"
+        submitButton.textContent = 'Ajouter la catégorie';
+        submitButton.onclick = addCategory;
+        // Cacher le bouton annuler
+        cancelButton.style.display = 'none';
+      } else {
+        showError('Erreur: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      showError('Erreur lors de la modification');
+    }
+  };
+
+  // Scroll vers le haut pour voir les champs
+  nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // Supprimer une catégorie
@@ -1012,6 +1622,125 @@ async function deleteCategory(categoryId) {
   }
 }
 
+// ═══════════════════════════════════════════════════
+// Gestion des types de bois
+// ═══════════════════════════════════════════════════
+
+// Charger les types de bois
+async function loadWoodTypes() {
+  try {
+    const response = await fetch('/api/settings/wood-types');
+    allWoodTypes = await response.json();
+    displayWoodTypes();
+    updateWoodTypeSelect();
+  } catch (error) {
+    console.error('Erreur chargement types de bois:', error);
+  }
+}
+
+// Afficher les types de bois
+function displayWoodTypes() {
+  const container = document.getElementById('wood-types-list');
+
+  if (allWoodTypes.length === 0) {
+    container.innerHTML = '<span style="color: var(--slate-gray);">Aucun type de bois</span>';
+    return;
+  }
+
+  container.innerHTML = allWoodTypes.map(woodType => `
+    <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+                background: var(--wood-light); border-radius: 8px; border: 2px solid var(--wood-medium);">
+      <span style="color: var(--wood-dark); font-weight: 600;">${woodType.name}</span>
+      <button onclick="deleteWoodType(${woodType.id})"
+              style="background: none; border: none; cursor: pointer; color: #991B1B; font-size: 1.2rem; padding: 0; line-height: 1;"
+              title="Supprimer">×</button>
+    </div>
+  `).join('');
+}
+
+// Mettre à jour le select des types de bois dans le formulaire
+function updateWoodTypeSelect() {
+  const select = document.getElementById('product-wood');
+  if (!select) return;
+
+  const currentValue = select.value;
+
+  select.innerHTML = '<option value="">-- Sélectionner --</option>';
+  allWoodTypes.forEach(woodType => {
+    const option = document.createElement('option');
+    option.value = woodType.name;
+    option.textContent = woodType.name;
+    select.appendChild(option);
+  });
+
+  if (currentValue) {
+    select.value = currentValue;
+  }
+}
+
+// Ajouter un type de bois
+async function addWoodType() {
+  const input = document.getElementById('new-wood-type-input');
+  const name = input.value.trim();
+
+  if (!name) {
+    showError('Veuillez entrer un nom de type de bois');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/settings/wood-types', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showSuccess('Type de bois ajouté');
+      input.value = '';
+      loadWoodTypes();
+    } else {
+      showError('Erreur: ' + data.error);
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('Erreur lors de l\'ajout');
+  }
+}
+
+// Supprimer un type de bois
+async function deleteWoodType(woodTypeId) {
+  const confirmed = await showConfirm({
+    title: 'Supprimer ce type de bois ?',
+    message: 'Les produits utilisant ce type de bois ne pourront pas être supprimés.',
+    icon: '🗑️',
+    confirmText: '🗑️ Supprimer',
+    cancelText: 'Annuler'
+  });
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(`/api/settings/wood-types/${woodTypeId}`, {
+      method: 'DELETE'
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showSuccess('Type de bois supprimé');
+      loadWoodTypes();
+    } else {
+      showError('Erreur: ' + data.error);
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('Erreur lors de la suppression');
+  }
+}
+
 // Gestion des onglets
 document.addEventListener('DOMContentLoaded', async () => {
   // Vérifier l'authentification
@@ -1022,8 +1751,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadStats();
   loadProducts();
   loadOrders();
-  loadContacts();
+  loadThreads();
   loadCategories();
+  loadWoodTypes();
 
   // Gérer la sélection de nouvelles images
   const imageInput = document.getElementById('product-images');
@@ -1031,7 +1761,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     imageInput.addEventListener('change', (e) => {
       const files = Array.from(e.target.files);
       if (files.length > 0) {
-        newImageFiles = files;
+        // Ajouter les nouveaux fichiers au tableau existant (accumulation)
+        files.forEach(file => {
+          newImageFiles.push(file);
+
+          // Ajouter aussi à allImagesOrderBoutDeBois
+          if (!window.allImagesOrderBoutDeBois) {
+            window.allImagesOrderBoutDeBois = [];
+          }
+          window.allImagesOrderBoutDeBois.push({
+            type: 'new',
+            data: file
+          });
+        });
+
+        // Réinitialiser l'input pour permettre de sélectionner à nouveau
+        e.target.value = '';
         displayNewImages();
       }
     });
@@ -1065,11 +1810,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (tabName === 'orders') {
         loadOrders();
       } else if (tabName === 'messages') {
-        loadContacts();
+        loadThreads();
       } else if (tabName === 'boutique') {
         loadBoutiqueImages();
       } else if (tabName === 'settings') {
         loadCategories();
+        loadWoodTypes();
       }
     });
   });
@@ -1119,12 +1865,13 @@ function displayBoutiqueImages() {
       <button onclick="deleteBoutiqueImage(${img.id})"
               style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10;
                      background: var(--wood-medium); color: white; border: none;
-                     width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+                     width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
                      display: flex; align-items: center; justify-content: center;
-                     font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
-              onmouseover="this.style.background='var(--wood-dark)'; this.style.transform='scale(1.1)'"
-              onmouseout="this.style.background='var(--wood-medium)'; this.style.transform='scale(1)'">
-        🗑️
+                     font-size: 1.2rem; font-weight: 700; transition: all 0.3s ease;
+                     box-shadow: 0 2px 8px rgba(139, 90, 60, 0.3);"
+              onmouseover="this.style.transform='scale(1.1) rotate(90deg)'; this.style.boxShadow='0 4px 12px rgba(139, 90, 60, 0.5)'; this.style.opacity='0.9'"
+              onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 2px 8px rgba(139, 90, 60, 0.3)'; this.style.opacity='1'">
+        ✕
       </button>
 
       <img src="${img.image_path}" alt="Boutique"
@@ -1134,18 +1881,26 @@ function displayBoutiqueImages() {
         <button onclick="moveBoutiqueImage(${img.id}, -1)"
                 class="btn btn-secondary"
                 ${index === 0 ? 'disabled' : ''}
-                style="padding: 0.5rem 0.75rem; font-size: 1rem; border-radius: 12px; min-width: 40px; height: 40px;
-                       display: flex; align-items: center; justify-content: center;">
+                style="padding: 0.5rem; font-size: 1rem; border-radius: 8px; width: 36px; height: 36px;
+                       display: flex; align-items: center; justify-content: center; cursor: pointer;">
           ◀
         </button>
-        <span style="color: var(--slate-gray); font-size: 0.85rem; min-width: 80px; text-align: center;">
-          Position ${index + 1}
-        </span>
+        <div style="display: flex; align-items: center; gap: 0.3rem;">
+          <span style="color: var(--slate-gray); font-size: 0.85rem; white-space: nowrap;">Position</span>
+          <input type="number"
+                 value="${index + 1}"
+                 min="1"
+                 max="${boutiqueImages.length}"
+                 onchange="changeBoutiqueImagePosition(${img.id}, this.value)"
+                 style="width: 45px; padding: 0.4rem; text-align: center; border: 2px solid var(--wood-medium);
+                        border-radius: 8px; font-size: 0.9rem; font-weight: 600; -moz-appearance: textfield;"
+                 onwheel="this.blur()">
+        </div>
         <button onclick="moveBoutiqueImage(${img.id}, 1)"
                 class="btn btn-secondary"
                 ${index === boutiqueImages.length - 1 ? 'disabled' : ''}
-                style="padding: 0.5rem 0.75rem; font-size: 1rem; border-radius: 12px; min-width: 40px; height: 40px;
-                       display: flex; align-items: center; justify-content: center;">
+                style="padding: 0.5rem; font-size: 1rem; border-radius: 8px; width: 36px; height: 36px;
+                       display: flex; align-items: center; justify-content: center; cursor: pointer;">
           ▶
         </button>
       </div>
@@ -1249,6 +2004,60 @@ async function moveBoutiqueImage(id, direction) {
     });
 
     displayBoutiqueImages();
+  } catch (error) {
+    console.error('Erreur réorganisation:', error);
+    showNotification('Erreur lors de la réorganisation', 'error');
+    loadBoutiqueImages(); // Recharger pour rétablir l'ordre
+  }
+}
+
+// Changer directement la position d'une image de boutique
+async function changeBoutiqueImagePosition(id, newPosition) {
+  const newPos = parseInt(newPosition);
+
+  // Validation
+  if (isNaN(newPos) || newPos < 1 || newPos > boutiqueImages.length) {
+    showNotification('Position invalide', 'error');
+    displayBoutiqueImages(); // Réafficher pour rétablir la valeur
+    return;
+  }
+
+  const currentIndex = boutiqueImages.findIndex(img => img.id === id);
+  if (currentIndex === -1) return;
+
+  // Si c'est déjà la bonne position, ne rien faire
+  if (currentIndex + 1 === newPos) return;
+
+  // Déplacer l'élément à la nouvelle position
+  const [movedImage] = boutiqueImages.splice(currentIndex, 1);
+  boutiqueImages.splice(newPos - 1, 0, movedImage);
+
+  // Mettre à jour les display_order
+  const updatedImages = boutiqueImages.map((img, idx) => ({
+    id: img.id,
+    display_order: idx + 1
+  }));
+
+  try {
+    const response = await fetch('/api/boutique/images/reorder', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ images: updatedImages })
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur lors de la réorganisation');
+    }
+
+    // Mettre à jour l'affichage local
+    boutiqueImages.forEach((img, idx) => {
+      img.display_order = idx + 1;
+    });
+
+    displayBoutiqueImages();
+    showNotification('Position mise à jour', 'success');
   } catch (error) {
     console.error('Erreur réorganisation:', error);
     showNotification('Erreur lors de la réorganisation', 'error');

@@ -414,6 +414,11 @@
   font-size: 1.2rem;
   transition: all var(--transition-fast);
   border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-edit {
@@ -422,6 +427,15 @@
 
 .btn-edit:hover {
   background: rgba(107, 127, 90, 0.1);
+  transform: scale(1.1);
+}
+
+.btn-close {
+  color: #059669;
+}
+
+.btn-close:hover {
+  background: rgba(5, 150, 105, 0.1);
   transform: scale(1.1);
 }
 
@@ -559,8 +573,8 @@
    ==================================== */
 .images-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
   margin-top: 1rem;
 }
 
@@ -617,6 +631,7 @@
   display: flex;
   justify-content: space-between;
   padding: 0.5rem;
+  padding-right: 3.5rem; /* Espace pour éviter le chevauchement avec le badge d'ordre */
   background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
   opacity: 0;
   transition: opacity var(--transition-fast);

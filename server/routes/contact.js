@@ -13,39 +13,53 @@ const requireAdmin = (req, res, next) => {
 
 // Route publique : envoyer un message de contact
 router.post('/', async (req, res) => {
-  const { name, email, phone, message, subject } = req.body;
+  try {
+    const { name, email, phone, message, subject } = req.body;
 
-  if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Informations manquantes' });
-  }
-
-  // Enregistrer dans la base de données
-  db.run(
-    `INSERT INTO contacts (name, email, message, status) VALUES (?, ?, ?, 'nouveau')`,
-    [name, email, message],
-    async function(err) {
-      if (err) {
-        console.error('Erreur insertion contact:', err);
-        return res.status(500).json({ error: 'Erreur lors de l\'envoi du message' });
-      }
-
-      const contactId = this.lastID;
-
-      // Récupérer le contact créé pour l'email
-      db.get('SELECT * FROM contacts WHERE id = ?', [contactId], async (err, contact) => {
-        if (!err && contact) {
-          // Envoyer l'email de notification au vendeur
-          await sendContactNotification(contact);
-        }
-      });
-
-      res.json({
-        success: true,
-        message: 'Message envoyé avec succès',
-        contactId: contactId
-      });
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Informations manquantes' });
     }
-  );
+
+    // Utiliser la version async de db
+    const dbAsync = require('../models/database');
+
+    // Enregistrer dans la table contacts
+    const contactResult = await dbAsync.run(
+      `INSERT INTO contacts (name, email, message, status) VALUES (?, ?, ?, 'nouveau')`,
+      [name, email, message]
+    );
+
+    const contactId = contactResult.id;
+
+    // Récupérer le contact créé
+    const contact = await dbAsync.get('SELECT * FROM contacts WHERE id = ?', [contactId]);
+
+    // Créer automatiquement un thread de conversation
+    const threadResult = await dbAsync.run(
+      'INSERT INTO message_threads (contact_id, subject, customer_name, customer_email, status, last_message_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
+      [contactId, `Message de ${name}`, name, email, 'open']
+    );
+
+    // Ajouter le message initial au thread
+    await dbAsync.run(
+      'INSERT INTO thread_messages (thread_id, sender_type, sender_name, sender_email, message) VALUES (?, ?, ?, ?, ?)',
+      [threadResult.id, 'customer', name, email, message]
+    );
+
+    // Envoyer l'email de notification
+    if (contact) {
+      await sendContactNotification(contact);
+    }
+
+    res.json({
+      success: true,
+      message: 'Message envoyé avec succès',
+      contactId: contactId
+    });
+  } catch (err) {
+    console.error('Erreur lors de l\'envoi du message:', err);
+    res.status(500).json({ error: 'Erreur lors de l\'envoi du message' });
+  }
 });
 
 // Routes admin pour gérer les contacts

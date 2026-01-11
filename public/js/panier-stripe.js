@@ -6,8 +6,30 @@ let stripe;
 let elements;
 let clientSecret;
 
+// Afficher un loader de paiement
+function showPaymentLoader() {
+  const paymentElement = document.getElementById('payment-element');
+  if (paymentElement) {
+    paymentElement.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; min-height: 200px;">
+        <div style="width: 50px; height: 50px; border: 4px solid var(--wood-light); border-top: 4px solid var(--wood-medium); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 1.5rem; color: var(--slate-gray); font-size: 0.95rem;">Chargement du module de paiement sécurisé...</p>
+      </div>
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    `;
+  }
+}
+
 // Initialiser Stripe (sera fait lors du checkout)
 async function initializeStripe(amount) {
+  // Afficher le loader
+  showPaymentLoader();
+
   // Récupérer la clé publique Stripe depuis le serveur
   if (!stripe) {
     try {
@@ -21,7 +43,7 @@ async function initializeStripe(amount) {
       stripe = Stripe(configData.publicKey);
     } catch (error) {
       console.error('Erreur lors de la récupération de la configuration Stripe:', error);
-      showMessage('Paiement temporairement indisponible');
+      showMessage('⚠️ Problème de connexion : Le service de paiement est temporairement indisponible. Vérifiez votre connexion internet et réessayez.', 'error');
       return false;
     }
   }
@@ -33,7 +55,16 @@ async function initializeStripe(amount) {
       body: JSON.stringify({ amount })
     });
 
+    if (!response.ok) {
+      throw new Error('Le service de paiement est temporairement indisponible.');
+    }
+
     const data = await response.json();
+
+    if (!data.clientSecret) {
+      throw new Error('Erreur lors de l\'initialisation du paiement');
+    }
+
     clientSecret = data.clientSecret;
 
     const appearance = {
@@ -76,13 +107,31 @@ async function initializeStripe(amount) {
     return true;
   } catch (error) {
     console.error('Erreur lors de l\'initialisation du paiement:', error);
-    showMessage('Erreur lors de l\'initialisation du paiement');
+
+    // Afficher un message d'erreur dans le conteneur de paiement
+    const paymentElement = document.getElementById('payment-element');
+    if (paymentElement) {
+      paymentElement.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; min-height: 200px; background: #fff3f3; border: 2px solid #dc3545; border-radius: 8px;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+          <h3 style="color: var(--wood-dark); margin-bottom: 0.5rem; text-align: center;">Problème de connexion</h3>
+          <p style="color: var(--slate-gray); font-size: 0.95rem; text-align: center; max-width: 400px;">
+            Le service de paiement est temporairement indisponible. Veuillez vérifier votre connexion internet et réessayer.
+          </p>
+          <button onclick="cancelCheckout()" class="btn btn-secondary" style="margin-top: 1.5rem;">
+            Retour au panier
+          </button>
+        </div>
+      `;
+    }
+
+    showMessage('⚠️ Problème de connexion : Le service de paiement est temporairement indisponible. Vérifiez votre connexion internet et réessayez.', 'error');
     return false;
   }
 }
 
 // Afficher les articles du panier
-function displayCartItems() {
+async function displayCartItems() {
   const cartItems = JSON.parse(localStorage.getItem('cart-bois') || '[]');
   const container = document.getElementById('cart-items');
 
@@ -105,35 +154,40 @@ function displayCartItems() {
   }
 
   container.innerHTML = cartItems.map((item, index) => `
-    <div style="display: flex; gap: 1.5rem; padding: 1.5rem; background: white; border-radius: 8px; margin-bottom: 1rem; border: 2px solid var(--wood-light);">
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem; background: white; border-radius: 8px; margin-bottom: 1rem; border: 2px solid var(--wood-light);">
       <img src="${item.image_url || '/images/placeholder-wood.jpg'}"
            alt="${item.name}"
-           style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-      <div style="flex: 1;">
-        <h3 style="margin-bottom: 0.5rem; color: var(--wood-dark);">${item.name}</h3>
-        <p style="color: var(--slate-gray); margin-bottom: 1rem;">${item.price.toFixed(2)} €</p>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-          <button onclick="changeQuantity(${index}, -1)" style="background: var(--wood-light); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">-</button>
-          <span style="font-weight: bold;">${item.quantity}</span>
-          <button onclick="changeQuantity(${index}, 1)" style="background: var(--wood-light); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">+</button>
+           style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">
+      <div style="flex: 1; min-width: 150px;">
+        <h3 style="margin-bottom: 0.5rem; color: var(--wood-dark); font-size: 1rem;">${item.name}</h3>
+        <p style="color: var(--slate-gray); margin-bottom: 0.5rem; font-size: 0.9rem;">${item.price.toFixed(2)} €</p>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button onclick="changeQuantity(${index}, -1)" style="background: var(--wood-light); border: none; padding: 0.5rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 1rem;">-</button>
+            <span style="font-weight: bold; min-width: 25px; text-align: center;">${item.quantity}</span>
+            <button onclick="changeQuantity(${index}, 1)" style="background: var(--wood-light); border: none; padding: 0.5rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 1rem;">+</button>
+          </div>
+          <button onclick="removeFromCart(${index})" class="btn btn-secondary" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
+            Retirer
+          </button>
         </div>
       </div>
-      <div style="text-align: right;">
-        <p style="font-size: 1.3rem; font-weight: bold; color: var(--accent-orange); margin-bottom: 1rem;">
-          ${(item.price * item.quantity).toFixed(2)} €
+      <div style="width: 100%; text-align: right; border-top: 1px solid var(--wood-light); padding-top: 0.75rem; margin-top: 0.5rem;">
+        <p style="font-size: 1.2rem; font-weight: bold; color: var(--accent-orange); margin: 0;">
+          Total: ${(item.price * item.quantity).toFixed(2)} €
         </p>
-        <button onclick="removeFromCart(${index})" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
-          Retirer
-        </button>
       </div>
     </div>
   `).join('');
 
-  displayCartSummary();
+  await displayCartSummary();
 }
 
+// Variable globale pour stocker les détails de livraison
+let shippingDetails = null;
+
 // Afficher le résumé du panier
-function displayCartSummary() {
+async function displayCartSummary() {
   const cartItems = JSON.parse(localStorage.getItem('cart-bois') || '[]');
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const container = document.getElementById('cart-summary');
@@ -145,6 +199,25 @@ function displayCartSummary() {
     return;
   }
 
+  // Calculer les frais de livraison via l'API
+  try {
+    const response = await fetch('/api/shipping/calculate?subtotal=' + subtotal);
+    shippingDetails = await response.json();
+  } catch (error) {
+    console.error('Erreur calcul frais de livraison:', error);
+    shippingDetails = {
+      shippingCost: 0,
+      total: subtotal,
+      message: ''
+    };
+  }
+
+  const shippingCost = shippingDetails.shippingCost || 0;
+  const total = shippingDetails.total || subtotal;
+  const shippingText = shippingCost === 0
+    ? '<span style="font-weight: 600; color: var(--accent-green);">Gratuite</span>'
+    : `<span style="font-weight: 600;">${shippingCost.toFixed(2)} €</span>`;
+
   container.style.display = 'block';
   container.innerHTML = `
     <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: var(--shadow-medium); border: 3px solid var(--wood-light);">
@@ -153,13 +226,18 @@ function displayCartSummary() {
         <span style="color: var(--slate-gray);">Sous-total</span>
         <span style="font-weight: 600;">${subtotal.toFixed(2)} €</span>
       </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
         <span style="color: var(--slate-gray);">Livraison</span>
-        <span style="font-weight: 600; color: var(--accent-green);">Gratuite</span>
+        ${shippingText}
       </div>
+      ${shippingDetails.message ? `
+        <div style="font-size: 0.85rem; color: var(--accent-orange); text-align: right; margin-bottom: 1rem; font-weight: 500;">
+          ${shippingDetails.message}
+        </div>
+      ` : '<div style="margin-bottom: 1rem;"></div>'}
       <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 700; padding-top: 1rem; border-top: 3px solid var(--wood-dark);">
         <span style="color: var(--wood-dark);">Total</span>
-        <span style="color: var(--accent-orange);">${subtotal.toFixed(2)} €</span>
+        <span style="color: var(--accent-orange);">${total.toFixed(2)} €</span>
       </div>
       <button onclick="proceedToCheckout()" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; padding: 1rem; font-size: 1.1rem;">
         Commander 🛒
@@ -169,12 +247,12 @@ function displayCartSummary() {
 }
 
 // Changer la quantité
-function changeQuantity(index, change) {
+async function changeQuantity(index, change) {
   const cartItems = JSON.parse(localStorage.getItem('cart-bois') || '[]');
   if (cartItems[index]) {
     cartItems[index].quantity = Math.max(1, cartItems[index].quantity + change);
     localStorage.setItem('cart-bois', JSON.stringify(cartItems));
-    displayCartItems();
+    await displayCartItems();
     updateCartCount();
   }
 }
@@ -193,7 +271,7 @@ async function removeFromCart(index) {
     const cartItems = JSON.parse(localStorage.getItem('cart-bois') || '[]');
     cartItems.splice(index, 1);
     localStorage.setItem('cart-bois', JSON.stringify(cartItems));
-    displayCartItems();
+    await displayCartItems();
     updateCartCount();
   }
 }
@@ -227,7 +305,7 @@ async function proceedToCheckout() {
     return;
   }
 
-  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = shippingDetails?.total || cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   // Masquer le panier et afficher le formulaire
   document.getElementById('cart-section').style.display = 'none';
@@ -236,7 +314,7 @@ async function proceedToCheckout() {
   // Afficher le récapitulatif dans le checkout
   displayCheckoutSummary();
 
-  // Initialiser Stripe
+  // Initialiser Stripe avec le total incluant les frais de livraison
   await initializeStripe(total);
 }
 
@@ -254,6 +332,8 @@ function displayCheckoutSummary() {
   if (!container) return;
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shippingCost = shippingDetails?.shippingCost || 0;
+  const total = shippingDetails?.total || subtotal;
 
   container.innerHTML = `
     ${cartItems.map(item => `
@@ -262,9 +342,21 @@ function displayCheckoutSummary() {
         <span style="font-weight: 600;">${(item.price * item.quantity).toFixed(2)} €</span>
       </div>
     `).join('')}
-    <div style="display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--wood-light); font-size: 1.2rem; font-weight: 700;">
+    <div style="height: 1px; background: var(--wood-light); margin: 0.75rem 0;"></div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+      <span style="color: var(--slate-gray);">Sous-total</span>
+      <span style="font-weight: 600; color: var(--wood-dark);">${subtotal.toFixed(2)} €</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+      <span style="color: var(--slate-gray);">Livraison</span>
+      <span style="font-weight: 600; color: ${shippingCost === 0 ? 'var(--accent-green)' : 'var(--wood-dark)'};">
+        ${shippingCost === 0 ? 'Gratuite' : shippingCost.toFixed(2) + ' €'}
+      </span>
+    </div>
+    <div style="height: 2px; background: var(--wood-light); margin: 1rem 0;"></div>
+    <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700;">
       <span style="color: var(--wood-dark);">Total</span>
-      <span style="color: var(--accent-orange);">${subtotal.toFixed(2)} €</span>
+      <span style="color: var(--accent-orange);">${total.toFixed(2)} €</span>
     </div>
   `;
 }
@@ -305,7 +397,9 @@ async function handlePayment(event) {
     // Si le paiement est réussi, créer la commande
     if (paymentIntent.status === 'succeeded') {
       const cartItems = JSON.parse(localStorage.getItem('cart-bois') || '[]');
-      const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const shippingCost = shippingDetails?.shippingCost || 0;
+      const totalAmount = shippingDetails?.total || subtotal;
 
       const orderData = {
         customerName,
@@ -313,7 +407,9 @@ async function handlePayment(event) {
         customerPhone,
         customerAddress,
         items: cartItems,
-        totalAmount: total,
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        totalAmount: totalAmount,
         paymentMethod: 'card',
         paymentId: paymentIntent.id
       };
@@ -376,8 +472,53 @@ function showPaymentMessage(message) {
 }
 
 // Afficher un message général
-function showMessage(message) {
-  alert(message);
+function showMessage(message, type = 'info') {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message message-${type}`;
+  messageDiv.textContent = message;
+  messageDiv.style.position = 'fixed';
+  messageDiv.style.zIndex = '10000';
+  messageDiv.style.maxWidth = '300px';
+  messageDiv.style.color = 'white'; // Texte toujours en blanc
+  messageDiv.style.padding = '1rem 1.5rem';
+  messageDiv.style.borderRadius = '8px';
+  messageDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  messageDiv.style.fontSize = '0.95rem';
+
+  // Couleurs selon le type
+  if (type === 'error') {
+    messageDiv.style.background = '#dc3545';
+  } else if (type === 'success') {
+    messageDiv.style.background = '#28a745';
+  } else {
+    messageDiv.style.background = 'var(--wood-medium)';
+  }
+
+  // Position adaptée selon la taille d'écran
+  if (window.innerWidth <= 768) {
+    // Mobile : en bas au centre
+    messageDiv.style.bottom = '20px';
+    messageDiv.style.left = '50%';
+    messageDiv.style.transform = 'translateX(-50%)';
+    messageDiv.style.width = 'calc(100% - 40px)';
+    messageDiv.style.maxWidth = '400px';
+  } else {
+    // Desktop : en haut à droite
+    messageDiv.style.top = '100px';
+    messageDiv.style.right = '20px';
+  }
+
+  document.body.appendChild(messageDiv);
+
+  setTimeout(() => {
+    messageDiv.style.opacity = '0';
+    messageDiv.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => {
+      if (messageDiv.parentNode) {
+        document.body.removeChild(messageDiv);
+      }
+    }, 300);
+  }, 5000);
 }
 
 // Activer/désactiver le chargement
@@ -398,8 +539,8 @@ function setLoading(isLoading) {
 }
 
 // Initialisation
-document.addEventListener('DOMContentLoaded', () => {
-  displayCartItems();
+document.addEventListener('DOMContentLoaded', async () => {
+  await displayCartItems();
   updateCartCount();
 
   // Initialiser le formulaire de commande
