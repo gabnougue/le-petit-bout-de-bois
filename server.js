@@ -84,13 +84,18 @@ app.get('/admin/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html'));
 });
 
-// Démarrage du serveur
-app.listen(PORT, () => {
-  console.log(`\n🪵 ════════════════════════════════════════ 🪵`);
-  console.log(`   Le ptit bout de bois - Serveur démarré`);
-  console.log(`🪵 ════════════════════════════════════════ 🪵`);
-  console.log(`\n🌳 Serveur accessible sur: http://localhost:${PORT}`);
-  console.log(`📦 Mode: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`\n🔗 Site jumeau "La p'tite perlouze": ${process.env.PERLOUZE_URL || 'http://localhost:3000'}`);
-  console.log(`\n🛠️  Bonne journée ! 🛠️\n`);
-});
+// Démarrage du serveur (uniquement en local, pas sur Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n🪵 ════════════════════════════════════════ 🪵`);
+    console.log(`   Le ptit bout de bois - Serveur démarré`);
+    console.log(`🪵 ════════════════════════════════════════ 🪵`);
+    console.log(`\n🌳 Serveur accessible sur: http://localhost:${PORT}`);
+    console.log(`📦 Mode: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`\n🔗 Site jumeau "La p'tite perlouze": ${process.env.PERLOUZE_URL || 'http://localhost:3000'}`);
+    console.log(`\n🛠️  Bonne journée ! 🛠️\n`);
+  });
+}
+
+// Export pour Vercel
+module.exports = app;
