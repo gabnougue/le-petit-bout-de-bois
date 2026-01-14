@@ -1,5 +1,5 @@
 // ====================================
-// Script panier - Le ptit bout de bois
+// Script panier - le p'tit bout de bois
 // ====================================
 
 // Afficher les articles du panier

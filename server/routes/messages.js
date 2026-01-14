@@ -140,7 +140,7 @@ router.post('/threads/:id/reply', requireAuth, upload.array('attachments', 5), a
 
     // Récupérer l'username de l'admin
     const admin = await db.get('SELECT username FROM admins WHERE id = ?', [req.session.adminId]);
-    const adminName = admin?.username || 'Le ptit bout de bois';
+    const adminName = admin?.username || 'le p\'tit bout de bois';
 
     // Insérer le message dans la BDD
     const messageResult = await db.run(`
@@ -207,7 +207,7 @@ router.post('/threads/:id/reply', requireAuth, upload.array('attachments', 5), a
                   </div>
                 </div>
                 <div class="footer">
-                  <p><strong>Le ptit bout de bois</strong></p>
+                  <p><strong>le p'tit bout de bois</strong></p>
                   <p>Créations artisanales en bois 🌳</p>
                   <p style="margin-top: 10px;">Vous pouvez répondre directement à cet email</p>
                 </div>

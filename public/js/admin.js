@@ -1,5 +1,5 @@
 // ====================================
-// Script admin - Le ptit bout de bois
+// Script admin - le p'tit bout de bois
 // ====================================
 
 let allProducts = [];

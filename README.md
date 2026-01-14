@@ -1,4 +1,4 @@
-# 🪵 Le ptit bout de bois
+# 🪵 le p'tit bout de bois
 
 Site e-commerce de créations artisanales en bois par Jean-Michel Nougué-Lecocq.
 
@@ -332,7 +332,7 @@ BOIS_URL=http://localhost:3001
 
 ## 📝 Licence
 
-© 2024 Le ptit bout de bois - Jean-Michel Nougué-Lecocq
+© 2024 le p'tit bout de bois - Jean-Michel Nougué-Lecocq
 
 Créé avec ❤️ et 🪵
 

@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /backoffice-bout-de-bois/
+Disallow: /api/admin/
+
+# Autoriser le reste du site
+Allow: /
+
+# Plan du site (à créer si besoin)
+# Sitemap: https://leptitboutdebois.fr/sitemap.xml

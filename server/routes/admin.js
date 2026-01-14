@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/database');
 const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const path = require('path');
 
@@ -31,6 +32,16 @@ const upload = multer({
   }
 });
 
+// Rate limiting strict pour le login admin
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 tentatives max
+  message: { error: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' },
+  skipSuccessfulRequests: false,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Middleware de vérification admin
 const requireAdmin = (req, res, next) => {
   if (!req.session.adminId) {
@@ -39,8 +50,8 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-// Login admin
-router.post('/login', async (req, res) => {
+// Login admin avec rate limiting
+router.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -78,12 +89,9 @@ router.post('/login', async (req, res) => {
 
 // Logout admin
 router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Erreur lors de la déconnexion' });
-    }
-    res.json({ success: true });
-  });
+  // Avec cookie-session, on détruit la session en la mettant à null
+  req.session = null;
+  res.json({ success: true });
 });
 
 // Vérifier la session

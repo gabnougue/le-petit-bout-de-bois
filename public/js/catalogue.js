@@ -1,5 +1,5 @@
 // ====================================
-// Script catalogue - Le ptit bout de bois
+// Script catalogue - le p'tit bout de bois
 // ====================================
 
 let allProducts = [];

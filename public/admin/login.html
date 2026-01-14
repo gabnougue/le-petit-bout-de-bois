@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion Admin - Le ptit bout de bois</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <title>Connexion Admin - le p'tit bout de bois</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +19,7 @@
       <div style="text-align: center; margin-bottom: 2rem;">
         <div style="font-size: 4rem; margin-bottom: 1rem;">🪵</div>
         <h2>Administration</h2>
-        <p style="color: var(--wood-medium); margin-top: 0.5rem;">Le ptit bout de bois</p>
+        <p style="color: var(--wood-medium); margin-top: 0.5rem;">le p'tit bout de bois</p>
       </div>
 
       <div id="error-message"></div>
@@ -47,12 +49,13 @@
   </div>
 
   <script>
+    const ADMIN_PATH = '/backoffice-bout-de-bois';
     // Vérifier si déjà connecté
     fetch('/api/admin/check-session')
       .then(res => res.json())
       .then(data => {
         if (data.authenticated) {
-          window.location.href = '/admin/dashboard';
+          window.location.href = `${ADMIN_PATH}/dashboard`;
         }
       });
 
@@ -85,7 +88,7 @@
         }
 
         // Succès - rediriger vers le dashboard
-        window.location.href = '/admin/dashboard';
+        window.location.href = `${ADMIN_PATH}/dashboard`;
 
       } catch (error) {
         console.error('Erreur:', error);

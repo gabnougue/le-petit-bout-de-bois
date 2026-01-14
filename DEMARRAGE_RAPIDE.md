@@ -1,4 +1,4 @@
-# 🚀 Démarrage rapide - Le ptit bout de bois
+# 🚀 Démarrage rapide - Le p'tit bout de bois
 
 ## Installation en 3 étapes
 
