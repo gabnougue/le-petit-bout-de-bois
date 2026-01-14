@@ -2,6 +2,9 @@
 // Script admin - le p'tit bout de bois
 // ====================================
 
+// URL secrète admin (doit correspondre au ADMIN_PATH du serveur)
+const ADMIN_PATH = '/backoffice-bout-de-bois';
+
 let allProducts = [];
 let allOrders = [];
 let allWoodTypes = [];
@@ -77,7 +80,7 @@ async function checkAuth() {
     const data = await response.json();
 
     if (!data.authenticated) {
-      window.location.href = '/admin';
+      window.location.href = ADMIN_PATH;
       return false;
     }
 
@@ -85,7 +88,7 @@ async function checkAuth() {
     return true;
   } catch (error) {
     console.error('Erreur auth:', error);
-    window.location.href = '/admin';
+    window.location.href = ADMIN_PATH;
     return false;
   }
 }
@@ -94,7 +97,7 @@ async function checkAuth() {
 async function logout() {
   try {
     await fetch('/api/admin/logout', { method: 'POST' });
-    window.location.href = '/admin';
+    window.location.href = ADMIN_PATH;
   } catch (error) {
     console.error('Erreur logout:', error);
   }
